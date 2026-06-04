@@ -1,0 +1,247 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background-primary text-text-primary;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Typography Scale */
+  .display-xl {
+    @apply text-display-xl;
+  }
+  
+  .display-lg {
+    @apply text-display-lg;
+  }
+  
+  .heading-1 {
+    @apply text-heading-1;
+  }
+  
+  .heading-2 {
+    @apply text-heading-2;
+  }
+  
+  .heading-3 {
+    @apply text-heading-3;
+  }
+  
+  .heading-4 {
+    @apply text-heading-4;
+  }
+}
+
+@layer components {
+  /* Glass Cards */
+  .glass-card {
+    @apply backdrop-blur-[20px] bg-white/[0.04] border border-white/8 rounded-card;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+  
+  .glass-card-premium {
+    @apply backdrop-blur-premium bg-background-secondary/70 border border-white/8 rounded-modal;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  }
+  
+  .glass-sidebar {
+    @apply backdrop-blur-[20px] bg-white/[0.03] border-r border-white/8;
+  }
+  
+  /* Buttons Base */
+  .btn-base {
+    @apply inline-flex items-center justify-center rounded-button font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-primary focus:ring-offset-2 focus:ring-offset-background-primary disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .btn-primary {
+    @apply btn-base bg-blue-primary text-white hover:bg-blue-glow hover:shadow-glow-blue active:scale-[0.98];
+  }
+  
+  .btn-secondary {
+    @apply btn-base border border-white/8 bg-white/5 hover:bg-white/10 text-text-primary active:scale-[0.98];
+  }
+  
+  .btn-ghost {
+    @apply btn-base hover:bg-white/5 text-text-secondary hover:text-text-primary active:scale-[0.98];
+  }
+  
+  .btn-success {
+    @apply btn-base bg-success text-white hover:brightness-110 active:scale-[0.98];
+  }
+  
+  .btn-warning {
+    @apply btn-base bg-warning text-white hover:brightness-110 active:scale-[0.98];
+  }
+  
+  .btn-error {
+    @apply btn-base bg-error text-white hover:brightness-110 active:scale-[0.98];
+  }
+  
+  /* Input Base */
+  .input-base {
+    @apply w-full rounded-input border border-white/8 bg-white/5 px-4 py-3 text-body-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-blue-primary focus:border-transparent transition-all duration-200 hover:bg-white/[0.07] backdrop-blur-sm;
+  }
+  
+  .input-error {
+    @apply border-error focus:ring-error;
+  }
+  
+  /* Badges */
+  .badge-base {
+    @apply inline-flex items-center px-3 py-1 rounded-badge text-caption font-medium;
+  }
+  
+  .badge-success {
+    @apply badge-base text-success bg-success/10 border border-success/20;
+  }
+  
+  .badge-warning {
+    @apply badge-base text-warning bg-warning/10 border border-warning/20;
+  }
+  
+  .badge-error {
+    @apply badge-base text-error bg-error/10 border border-error/20;
+  }
+  
+  .badge-info {
+    @apply badge-base text-blue-glow bg-blue-glow/10 border border-blue-glow/20;
+  }
+  
+  .badge-premium {
+    @apply badge-base text-purple bg-purple/10 border border-purple/20;
+  }
+  
+  /* Card Variants */
+  .card-primary {
+    @apply glass-card p-6 hover:bg-white/[0.06] transition-all duration-300;
+  }
+  
+  .card-stat {
+    @apply card-primary space-y-2;
+  }
+  
+  .card-interactive {
+    @apply card-primary cursor-pointer hover:scale-[1.02] active:scale-[0.99];
+  }
+  
+  /* Table Styles */
+  .table-container {
+    @apply glass-card overflow-hidden;
+  }
+  
+  .table-header {
+    @apply border-b border-white/8 bg-white/[0.02];
+  }
+  
+  .table-row {
+    @apply border-b border-white/8 hover:bg-white/5 transition-colors;
+  }
+  
+  /* Sidebar Menu Item */
+  .menu-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-button text-body-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all duration-200 cursor-pointer;
+  }
+  
+  .menu-item-active {
+    @apply menu-item bg-blue-primary/10 text-blue-glow border-l-2 border-blue-primary;
+  }
+  
+  /* Divider */
+  .divider {
+    @apply border-t border-white/8 my-4;
+  }
+  
+  /* Skeleton Loading */
+  .skeleton {
+    @apply animate-pulse bg-white/5 rounded;
+  }
+  
+  .skeleton-shimmer {
+    @apply relative overflow-hidden bg-white/5 rounded;
+  }
+  
+  .skeleton-shimmer::after {
+    @apply absolute inset-0 bg-shimmer;
+    content: '';
+    animation: shimmer 2s infinite;
+  }
+}
+
+@layer utilities {
+  /* Glow Effects */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+  }
+  
+  .glow-blue-strong {
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.5);
+  }
+  
+  .glow-success {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+  
+  .glow-error {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+  }
+  
+  /* Text Shadow Glow */
+  .text-shadow-glow {
+    text-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+  }
+  
+  /* Noise Texture */
+  .noise-texture {
+    position: relative;
+  }
+  
+  .noise-texture::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Scrollbar Custom */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  /* Gradient Text */
+  .gradient-text {
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Focus Visible */
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary;
+  }
+}
