@@ -1,6 +1,72 @@
 # 📚 AutoZen - Índice de Documentação
 
-## 🆕 Documentação V9 (Junho 2026) ⭐⭐⭐⭐⭐
+## 🆕 Documentação V11 (Junho 2026) ⭐⭐⭐⭐⭐ ATUAL
+
+### Decisões Arquiteturais Finais MVP V11
+1. **[DECISOES_ARQUITETURAIS_V11.md](./DECISOES_ARQUITETURAIS_V11.md)** ⭐⭐⭐⭐⭐ **DECISÕES FINAIS MVP**
+   - Decisões arquiteturais definitivas para MVP
+   - Domínio único: app.autozen.com.br (sem subdomínios)
+   - Cobrança PIX manual (sem gateway no MVP)
+   - Painel Super Admin completo (/super-admin)
+   - Storage atualizado (8 buckets + payment-proofs)
+   - Tabela subscriptions atualizada (comprovante + aprovação)
+   - Middleware de assinatura (verificação + bloqueio)
+   - Tela de assinatura (5 estados visuais)
+   - Hospedagem: Hostinger Node.js + PM2 + Nginx
+   - Variáveis de ambiente (frontend + servidor)
+   - Estratégia de lançamento (3 semanas)
+   - Metas financeiras (10 → 50 → 100 empresas)
+   - Roadmap de automação (manual → semi → total)
+   - Benefícios quantificados (R$ 1.000/mês economia)
+   - Breakeven: 16 empresas (vs 42 complexo)
+   - **~35KB de decisões pragmáticas**
+
+2. **[RESUMO_V11.md](./RESUMO_V11.md)** ⭐ **RESUMO**
+   - Visão geral das decisões V11
+   - Comparação arquitetura simples vs complexa
+   - 10 benefícios quantificados
+   - Roadmap de automação (3 fases)
+   - Checklist de lançamento
+   - Próximos passos
+
+3. **[CHANGELOG_V11.md](./CHANGELOG_V11.md)** ⭐ **HISTÓRICO**
+   - 10 mudanças principais
+   - Comparação V10 vs V11
+   - Estatísticas de mudanças
+   - Checklist de implementação completo
+   - Features por módulo
+   - Decisões técnicas justificadas
+   - Benefícios quantificados
+
+---
+
+## 📖 Documentação V10 (Junho 2026) ⭐⭐⭐⭐
+
+### Prompt Mestre ANTIGRAVITY V10
+1. **[PROMPT_MESTRE_V10.md](./PROMPT_MESTRE_V10.md)** ⭐⭐⭐⭐ **PROMPT COMPLETO**
+   - Prompt mestre para gerar AutoZen do zero
+   - Contexto completo do produto
+   - Stack tecnológica obrigatória
+   - Design system detalhado
+   - Arquitetura multi-tenant
+   - RBAC (5 roles + permissões)
+   - 7 módulos MVP detalhados
+   - Database schema executável
+   - Segurança (RLS + middlewares)
+   - Storage (7 buckets definidos)
+   - Variáveis Supabase incluídas
+   - Estrutura de código
+   - Qualidade e padrões
+   - **~50KB de prompt executável**
+
+2. **[RESUMO_V10.md](./RESUMO_V10.md)** ⭐ **RESUMO**
+   - Visão geral do prompt mestre
+   - Como usar com LLMs
+   - Comparação com V9
+
+---
+
+## 📖 Documentação V9 (Junho 2026) ⭐⭐⭐⭐⭐
 
 ### Plano de Desenvolvimento V9
 1. **[PLANO_DESENVOLVIMENTO_V9.md](./PLANO_DESENVOLVIMENTO_V9.md)** ⭐⭐⭐⭐⭐ **PLANO EXECUTÁVEL**
@@ -291,27 +357,32 @@ scripts/            - Scripts de automação
 
 ### Para Novos Desenvolvedores
 
-1. **[PLANO_DESENVOLVIMENTO_V9.md](./PLANO_DESENVOLVIMENTO_V9.md)** ⭐⭐⭐⭐⭐ **COMECE AQUI (V9)**
+1. **[DECISOES_ARQUITETURAIS_V11.md](./DECISOES_ARQUITETURAIS_V11.md)** ⭐⭐⭐⭐⭐ **COMECE AQUI (V11)**
+   - Entenda as decisões finais do MVP
+   - Veja arquitetura simplificada
+   - Conheça domínio, cobrança, super-admin
+
+2. **[PLANO_DESENVOLVIMENTO_V9.md](./PLANO_DESENVOLVIMENTO_V9.md)** ⭐⭐⭐⭐⭐ **PLANO (V9)**
    - Entenda o plano de execução completo
    - Veja os 9 sprints detalhados
    - Code samples prontos para usar
 
-2. **[PRD_V8.md](./PRD_V8.md)** ⭐⭐⭐⭐⭐ **PRODUTO (V8)**
+3. **[PRD_V8.md](./PRD_V8.md)** ⭐⭐⭐⭐⭐ **PRODUTO (V8)**
    - Entenda o produto completo
    - Veja problema, solução e personas
    - Conheça todas as funcionalidades
 
-3. **[ESTRUTURA_CODIGO_V7.md](./ESTRUTURA_CODIGO_V7.md)** ⭐⭐⭐⭐ **ARQUITETURA (V7)**
+4. **[ESTRUTURA_CODIGO_V7.md](./ESTRUTURA_CODIGO_V7.md)** ⭐⭐⭐⭐ **ARQUITETURA (V7)**
    - Mergulhe na estrutura de código
    - Entenda organização de pastas
    - Veja padrões e convenções
 
-3. **[SUPABASE_RLS_GUIDE_V6.md](./SUPABASE_RLS_GUIDE_V6.md)** ⭐⭐⭐ **DATABASE**
+4. **[SUPABASE_RLS_GUIDE_V6.md](./SUPABASE_RLS_GUIDE_V6.md)** ⭐⭐⭐ **DATABASE**
    - Entenda RLS e Multi-Tenant
    - Veja policies completas
    - Aprenda RBAC
 
-4. **[MODELAGEM_BANCO_V5.md](./MODELAGEM_BANCO_V5.md)** ⭐⭐ **SCHEMA**
+5. **[MODELAGEM_BANCO_V5.md](./MODELAGEM_BANCO_V5.md)** ⭐⭐ **SCHEMA**
    - Veja 24 tabelas detalhadas
    - Entenda relacionamentos
    - Execute SQL
@@ -331,9 +402,10 @@ scripts/            - Scripts de automação
 
 ### Para Product Managers
 
-1. **[PRD_V8.md](./PRD_V8.md)**
-2. **[MODELO_COMERCIAL.md](./MODELO_COMERCIAL.md)**
-3. **[ARQUITETURA_COMPLETA_V3.md](./ARQUITETURA_COMPLETA_V3.md)**
+1. **[DECISOES_ARQUITETURAIS_V11.md](./DECISOES_ARQUITETURAIS_V11.md)** - Decisões MVP
+2. **[PRD_V8.md](./PRD_V8.md)** - Product Requirements
+3. **[MODELO_COMERCIAL.md](./MODELO_COMERCIAL.md)** - Modelo de negócio
+4. **[ARQUITETURA_COMPLETA_V3.md](./ARQUITETURA_COMPLETA_V3.md)** - Visão geral
 
 ### Para Designers
 
@@ -345,7 +417,24 @@ scripts/            - Scripts de automação
 
 ## 📊 Métricas da Documentação
 
-### V9 (Junho 2026) ⭐ ATUAL
+### V11 (Junho 2026) ⭐ ATUAL
+- **3 documentos novos**
+- **~50KB de decisões arquiteturais**
+- **Arquitetura simplificada definida**
+- **10 decisões principais documentadas**
+- **Economia: R$ 1.000/mês**
+- **Lançamento: 4 semanas mais rápido**
+- **Breakeven: 16 empresas (vs 42)**
+
+### V10 (Junho 2026)
+- **2 documentos novos**
+- **~55KB de prompt executável**
+- **Prompt mestre ANTIGRAVITY**
+- **Stack completa definida**
+- **Database SQL executável**
+- **Variáveis Supabase incluídas**
+
+### V9 (Junho 2026)
 - **3 documentos novos**
 - **~70KB de conteúdo executável**
 - **Plano de 9 sprints (8-10 semanas)**
@@ -389,13 +478,22 @@ scripts/            - Scripts de automação
 - **Scripts automatizados**
 
 ### Total Acumulado
-- **50+ documentos**
-- **405KB+ de documentação**
-- **Cobertura completa**: Design, Arquitetura, Database, Código, Produto, Execução
+- **55+ documentos**
+- **460KB+ de documentação**
+- **Cobertura completa**: Design, Arquitetura, Database, Código, Produto, Execução, Decisões MVP
 
 ---
 
 ## 🔍 Busca Rápida por Tópico
+
+### Decisões Arquiteturais MVP ⭐ NOVO
+- [DECISOES_ARQUITETURAIS_V11.md](./DECISOES_ARQUITETURAIS_V11.md) - Decisões finais MVP
+- [RESUMO_V11.md](./RESUMO_V11.md) - Resumo executivo V11
+- [CHANGELOG_V11.md](./CHANGELOG_V11.md) - Histórico de mudanças V11
+
+### Prompt Mestre
+- [PROMPT_MESTRE_V10.md](./PROMPT_MESTRE_V10.md) - Prompt completo ANTIGRAVITY
+- [RESUMO_V10.md](./RESUMO_V10.md) - Resumo V10
 
 ### Plano de Desenvolvimento ⭐ NOVO
 - [PLANO_DESENVOLVIMENTO_V9.md](./PLANO_DESENVOLVIMENTO_V9.md) - Plano de 8 semanas
@@ -488,6 +586,6 @@ scripts\dev.bat
 
 ---
 
-**Última atualização:** Junho 2026 - V9  
+**Última atualização:** Junho 2026 - V11  
 **Status:** ✅ Documentação completa e atualizada  
-**Versão Atual:** 9.0 - Plano de Desenvolvimento Executável
+**Versão Atual:** 11.0 - Decisões Arquiteturais Finais MVP
