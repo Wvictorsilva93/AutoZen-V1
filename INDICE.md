@@ -1,6 +1,44 @@
 # 📚 AutoZen - Índice de Documentação
 
-## 🆕 Documentação V8 (Junho 2026) ⭐⭐⭐⭐⭐
+## 🆕 Documentação V9 (Junho 2026) ⭐⭐⭐⭐⭐
+
+### Plano de Desenvolvimento V9
+1. **[PLANO_DESENVOLVIMENTO_V9.md](./PLANO_DESENVOLVIMENTO_V9.md)** ⭐⭐⭐⭐⭐ **PLANO EXECUTÁVEL**
+   - 9 Sprints detalhados (Sprint 0 → Sprint 8)
+   - Duração: 8-10 semanas
+   - Metodologia: Sprints semanais
+   - Sprint 0: Setup e Fundação
+   - Sprint 1: Autenticação + Multi-Tenant
+   - Sprint 2: Clientes (CRUD)
+   - Sprint 3: Veículos (CRUD)
+   - Sprint 4: Agendamentos
+   - Sprint 5: Ordens de Serviço (Core)
+   - Sprint 6: Financeiro
+   - Sprint 7: Dashboard
+   - Sprint 8: Produção + Assinaturas
+   - Code samples prontos (TypeScript + SQL)
+   - Database schemas completos
+   - Docker + Nginx configs
+   - Critérios de aceitação por sprint
+   - Critério de lançamento (15 itens)
+   - Metas MVP (10 empresas, R$ 970/mês)
+   - Backlog pós-lançamento (V1.1 → V3.0)
+   - **~60KB de plano executável**
+
+2. **[RESUMO_V9.md](./RESUMO_V9.md)** ⭐ **RESUMO**
+   - Visão geral do plano
+   - Resumo de cada sprint
+   - Metas e KPIs
+   - Comparação com V8
+
+3. **[CHANGELOG_V9.md](./CHANGELOG_V9.md)** ⭐ **HISTÓRICO**
+   - Mudanças detalhadas
+   - Entregas por sprint
+   - Checklist completo
+
+---
+
+## 📖 Documentação V8 (Junho 2026) ⭐⭐⭐⭐⭐
 
 ### Product Requirements Document V8
 1. **[PRD_V8.md](./PRD_V8.md)** ⭐⭐⭐⭐⭐ **PRD COMPLETO**
@@ -253,12 +291,17 @@ scripts/            - Scripts de automação
 
 ### Para Novos Desenvolvedores
 
-1. **[PRD_V8.md](./PRD_V8.md)** ⭐⭐⭐⭐⭐ **COMECE AQUI (V8)**
-   - Entenda o produto completo em 15 minutos
+1. **[PLANO_DESENVOLVIMENTO_V9.md](./PLANO_DESENVOLVIMENTO_V9.md)** ⭐⭐⭐⭐⭐ **COMECE AQUI (V9)**
+   - Entenda o plano de execução completo
+   - Veja os 9 sprints detalhados
+   - Code samples prontos para usar
+
+2. **[PRD_V8.md](./PRD_V8.md)** ⭐⭐⭐⭐⭐ **PRODUTO (V8)**
+   - Entenda o produto completo
    - Veja problema, solução e personas
    - Conheça todas as funcionalidades
 
-2. **[ESTRUTURA_CODIGO_V7.md](./ESTRUTURA_CODIGO_V7.md)** ⭐⭐⭐⭐ **ARQUITETURA**
+3. **[ESTRUTURA_CODIGO_V7.md](./ESTRUTURA_CODIGO_V7.md)** ⭐⭐⭐⭐ **ARQUITETURA (V7)**
    - Mergulhe na estrutura de código
    - Entenda organização de pastas
    - Veja padrões e convenções
@@ -302,7 +345,15 @@ scripts/            - Scripts de automação
 
 ## 📊 Métricas da Documentação
 
-### V8 (Junho 2026) ⭐ ATUAL
+### V9 (Junho 2026) ⭐ ATUAL
+- **3 documentos novos**
+- **~70KB de conteúdo executável**
+- **Plano de 9 sprints (8-10 semanas)**
+- **90+ entregas específicas**
+- **Code samples TypeScript + SQL**
+- **Configs Docker + Nginx**
+
+### V8 (Junho 2026)
 - **3 documentos novos**
 - **~35KB de conteúdo estratégico**
 - **PRD completo e executável**
@@ -338,15 +389,19 @@ scripts/            - Scripts de automação
 - **Scripts automatizados**
 
 ### Total Acumulado
-- **45+ documentos**
-- **335KB+ de documentação**
-- **Cobertura completa**: Design, Arquitetura, Database, Código, Produto
+- **50+ documentos**
+- **405KB+ de documentação**
+- **Cobertura completa**: Design, Arquitetura, Database, Código, Produto, Execução
 
 ---
 
 ## 🔍 Busca Rápida por Tópico
 
-### Product Requirements ⭐ NOVO
+### Plano de Desenvolvimento ⭐ NOVO
+- [PLANO_DESENVOLVIMENTO_V9.md](./PLANO_DESENVOLVIMENTO_V9.md) - Plano de 8 semanas
+- [RESUMO_V9.md](./RESUMO_V9.md) - Resumo executivo
+
+### Product Requirements
 - [PRD_V8.md](./PRD_V8.md) - PRD completo
 - [RESUMO_V8.md](./RESUMO_V8.md) - Resumo executivo
 
@@ -433,6 +488,6 @@ scripts\dev.bat
 
 ---
 
-**Última atualização:** Junho 2026 - V8  
+**Última atualização:** Junho 2026 - V9  
 **Status:** ✅ Documentação completa e atualizada  
-**Versão Atual:** 8.0 - Product Requirements Document
+**Versão Atual:** 9.0 - Plano de Desenvolvimento Executável
