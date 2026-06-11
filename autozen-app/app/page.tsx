@@ -65,21 +65,34 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase.auth.signUp({
-        email: registerEmail,
-        password: registerPassword,
-        options: {
-          data: {
-            company_name: companyName,
-            responsible,
-            whatsapp,
-          },
-        },
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: registerEmail,
+          password: registerPassword,
+          company_name: companyName,
+          responsible,
+          whatsapp,
+        }),
       });
 
-      if (error) {
-        setError(error.message);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? 'Erro ao criar conta.');
+        return;
+      }
+
+      // Autentica para criar a sessão e entrar no dashboard
+      const supabase = getSupabaseClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: registerEmail,
+        password: registerPassword,
+      });
+
+      if (signInError) {
+        setError('Conta criada, mas falha ao entrar. Tente fazer login.');
         return;
       }
 
