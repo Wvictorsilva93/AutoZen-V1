@@ -84,9 +84,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, company_id: company.id });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Erro interno do servidor';
+    console.error('[register] erro:', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
