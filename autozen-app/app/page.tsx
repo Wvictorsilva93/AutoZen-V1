@@ -53,7 +53,7 @@ export default function LoginPage() {
 
       window.location.href = '/dashboard';
     } catch {
-      setError('Erro ao conectar. Tente novamente.');
+      setError('Não foi possível conectar ao Supabase. Verifique a configuração do projeto em .env.local.');
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export default function LoginPage() {
 
       window.location.href = '/dashboard';
     } catch {
-      setError('Erro ao criar conta. Tente novamente.');
+      setError('Não foi possível conectar ao Supabase. Verifique a configuração do projeto em .env.local.');
     } finally {
       setLoading(false);
     }

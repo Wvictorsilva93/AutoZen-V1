@@ -26,12 +26,26 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-
   const { pathname } = request.nextUrl;
 
   // Rotas públicas
   const publicRoutes = ['/', '/auth/callback'];
+
+  // Tenta obter o usuário; se o Supabase estiver inacessível, não derruba o app
+  let user = null;
+  try {
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+  } catch {
+    // Backend indisponível: libera rotas públicas, bloqueia protegidas
+    if (publicRoutes.includes(pathname)) {
+      return supabaseResponse;
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
+  }
+
   if (publicRoutes.includes(pathname)) {
     if (user && pathname === '/') {
       const url = request.nextUrl.clone();

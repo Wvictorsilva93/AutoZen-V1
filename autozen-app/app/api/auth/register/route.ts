@@ -84,8 +84,25 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, company_id: company.id });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro interno do servidor';
-    console.error('[register] erro:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const raw = error instanceof Error ? error.message : String(error);
+    console.error('[register] erro:', raw);
+
+    // Falha de conexão com o Supabase (projeto inexistente/pausado/offline)
+    const isConnError =
+      raw.includes('fetch failed') ||
+      raw.includes('ENOTFOUND') ||
+      raw.includes('getaddrinfo');
+
+    if (isConnError) {
+      return NextResponse.json(
+        {
+          error:
+            'Não foi possível conectar ao Supabase. Verifique se o projeto existe e se as variáveis NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY estão corretas em .env.local.',
+        },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json({ error: raw }, { status: 500 });
   }
 }
