@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Geist } from "next/font/google";
+import { PWARegister } from "@/components/pwa-register";
+import { cn } from "@/lib/utils";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: "AutoZen - Gestão Automotiva",
@@ -31,8 +30,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} dark h-full antialiased`}>
+    <html lang="pt-BR" className={cn("dark h-full antialiased font-sans", geist.variable)}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <PWARegister />
         {children}
       </body>
     </html>
