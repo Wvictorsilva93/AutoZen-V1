@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { ENV } from '@/lib/env';
 
 export async function POST(request: Request) {
   try {
@@ -14,10 +15,17 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: 'SUPABASE_SERVICE_ROLE_KEY não configurada no servidor.' },
+        { status: 503 }
+      );
+    }
+
     const cookieStore = await cookies();
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      ENV.SUPABASE_URL,
+      ENV.SUPABASE_SERVICE_ROLE_KEY,
       {
         cookies: {
           getAll() {
@@ -36,58 +44,63 @@ export async function POST(request: Request) {
       }
     );
 
-    // 1. Create company
+    // 1. Cria a empresa (schema real: name, responsible_name, phone)
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .insert({
         name: company_name,
-        responsible,
-        whatsapp,
-        email,
-        subscription_status: 'trial',
+        responsible_name: responsible,
+        phone: whatsapp,
+        plan: 'basic',
+        status: 'active',
       })
-      .select()
+      .select('id')
       .single();
 
     if (companyError) {
       return NextResponse.json({ error: companyError.message }, { status: 500 });
     }
 
-    // 2. Create auth user
+    // 2. Cria o usuário no Auth. O trigger handle_new_user cria o profile
+    //    lendo company_id/name/role/phone do user_metadata.
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { company_name, responsible, whatsapp },
+      user_metadata: {
+        name: responsible,
+        role: 'admin',
+        company_id: company.id,
+        phone: whatsapp,
+      },
     });
 
     if (authError) {
-      // Rollback company
+      // Rollback da empresa criada
       await supabase.from('companies').delete().eq('id', company.id);
       return NextResponse.json({ error: authError.message }, { status: 500 });
     }
 
-    // 3. Create user record
-    const { error: userError } = await supabase
-      .from('users')
-      .insert({
-        id: authData.user.id,
-        company_id: company.id,
-        email,
-        name: responsible,
-        role: 'admin_empresa',
-      });
-
-    if (userError) {
-      return NextResponse.json({ error: userError.message }, { status: 500 });
-    }
+    // 3. Garante o vínculo do profile (defensivo, caso o trigger não preencha)
+    await supabase
+      .from('profiles')
+      .upsert(
+        {
+          user_id: authData.user.id,
+          company_id: company.id,
+          name: responsible,
+          role: 'admin',
+          email,
+          phone: whatsapp,
+        },
+        { onConflict: 'user_id' }
+      );
 
     return NextResponse.json({ success: true, company_id: company.id });
   } catch (error) {
     const raw = error instanceof Error ? error.message : String(error);
     console.error('[register] erro:', raw);
 
-    // Falha de conexão com o Supabase (projeto inexistente/pausado/offline)
     const isConnError =
       raw.includes('fetch failed') ||
       raw.includes('ENOTFOUND') ||
@@ -97,7 +110,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            'Não foi possível conectar ao Supabase. Verifique se o projeto existe e se as variáveis NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY estão corretas em .env.local.',
+            'Não foi possível conectar ao Supabase. Verifique se o projeto existe e as variáveis em .env.local.',
         },
         { status: 503 }
       );
