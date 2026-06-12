@@ -7,6 +7,16 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ------------------------------------------------------------
+-- 0) REMOVER GATILHO/ TABELA CONFLITANTES (de templates anteriores)
+--    Um trigger em auth.users inserindo em "profiles" com company_id
+--    NOT NULL estava bloqueando a criação de usuários. Removemos.
+-- ------------------------------------------------------------
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS handle_new_user ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- ------------------------------------------------------------
 -- 1) LIMPEZA (drop em ordem reversa de dependência)
 -- ------------------------------------------------------------
 DROP TABLE IF EXISTS payments CASCADE;

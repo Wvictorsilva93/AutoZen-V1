@@ -1,14 +1,27 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { ENV } from '@/lib/env';
+
+const SUPABASE_URL = ENV.SUPABASE_URL;
+const SUPABASE_ANON_KEY = ENV.SUPABASE_ANON_KEY;
+
+const publicRoutes = ['/', '/auth/callback'];
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  const { pathname } = request.nextUrl;
+  const supabaseResponseInit = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  // Sem configuração do Supabase em runtime: não derruba o site.
+  // Libera rotas públicas e deixa o client-side tratar o resto.
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return supabaseResponseInit;
+  }
+
+  try {
+    let supabaseResponse = supabaseResponseInit;
+
+    const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -23,46 +36,37 @@ export async function middleware(request: NextRequest) {
           );
         },
       },
-    }
-  );
+    });
 
-  const { pathname } = request.nextUrl;
+    const { data } = await supabase.auth.getUser();
+    const user = data.user;
 
-  // Rotas públicas
-  const publicRoutes = ['/', '/auth/callback'];
-
-  // Tenta obter o usuário; se o Supabase estiver inacessível, não derruba o app
-  let user = null;
-  try {
-    const result = await supabase.auth.getUser();
-    user = result.data.user;
-  } catch {
-    // Backend indisponível: libera rotas públicas, bloqueia protegidas
     if (publicRoutes.includes(pathname)) {
+      if (user && pathname === '/') {
+        const url = request.nextUrl.clone();
+        url.pathname = '/dashboard';
+        return NextResponse.redirect(url);
+      }
       return supabaseResponse;
     }
-    const url = request.nextUrl.clone();
-    url.pathname = '/';
-    return NextResponse.redirect(url);
-  }
 
-  if (publicRoutes.includes(pathname)) {
-    if (user && pathname === '/') {
+    // Rota protegida - sem user = redireciona para login
+    if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = '/dashboard';
+      url.pathname = '/';
       return NextResponse.redirect(url);
     }
-    return supabaseResponse;
-  }
 
-  // Rota protegida - sem user = redireciona para login
-  if (!user) {
+    return supabaseResponse;
+  } catch {
+    // Qualquer falha (rede/DNS/backend): nunca retornar 500.
+    if (publicRoutes.includes(pathname)) {
+      return supabaseResponseInit;
+    }
     const url = request.nextUrl.clone();
     url.pathname = '/';
     return NextResponse.redirect(url);
   }
-
-  return supabaseResponse;
 }
 
 export const config = {
