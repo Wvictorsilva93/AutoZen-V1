@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       email_confirm: true,
       user_metadata: {
         name: responsible,
-        role: 'admin',
+        role: 'admin_empresa',
         company_id: company.id,
         phone: whatsapp,
       },
