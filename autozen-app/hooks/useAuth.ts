@@ -10,9 +10,13 @@ export function useAuth() {
 
   useEffect(() => {
     const supabase = getSupabaseClient();
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
 
     async function getUser() {
-      const { data } = await supabase.auth.getUser();
+      const { data } = await supabase!.auth.getUser();
       setUser(data.user);
       setLoading(false);
     }

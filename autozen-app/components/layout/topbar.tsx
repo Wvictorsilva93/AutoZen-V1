@@ -10,7 +10,9 @@ export function TopBar() {
 
   async function handleLogout() {
     const supabase = getSupabaseClient();
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     router.push('/');
   }
 

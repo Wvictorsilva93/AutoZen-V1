@@ -8,6 +8,7 @@ export async function syncPendingActions() {
   if (pending.length === 0) return;
 
   const supabase = getSupabaseClient();
+  if (!supabase) return;
 
   for (const action of pending) {
     try {

@@ -39,6 +39,10 @@ export default function LoginPage() {
 
     try {
       const supabase = getSupabaseClient();
+      if (!supabase) {
+        setError('Sistema não configurado. Tente novamente em instantes.');
+        return;
+      }
       const { error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
@@ -86,6 +90,10 @@ export default function LoginPage() {
 
       // Autentica para criar a sessão e entrar no dashboard
       const supabase = getSupabaseClient();
+      if (!supabase) {
+        setError('Conta criada. Faça login para entrar.');
+        return;
+      }
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: registerEmail,
         password: registerPassword,
