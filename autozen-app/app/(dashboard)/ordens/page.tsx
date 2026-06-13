@@ -2,101 +2,228 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Plus, Search, FileText } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { Plus, Search, FileText, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { OrderStatus } from '@/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { listRows, insertRow, updateRow, deleteRow } from '@/lib/db';
+import { useProfile } from '@/hooks/useProfile';
 
-interface OrderDisplay {
-  id: string;
-  number: number;
-  customer: string;
-  vehicle: string;
-  services: string[];
-  status: OrderStatus;
-  total: number;
-  createdAt: string;
+interface Order {
+  id: string; company_id: string; number: number; client_id: string; vehicle_id: string;
+  description: string | null; status: string; total: number; payment_method: string | null;
 }
+interface Opt { id: string; name?: string; plate?: string }
 
-const mockOrders: OrderDisplay[] = [
-  { id: '1', number: 1001, customer: 'Carlos Silva', vehicle: 'Corolla - ABC-1234', services: ['Lavagem Completa', 'Polimento'], status: 'lavando', total: 330, createdAt: '2025-06-10' },
-  { id: '2', number: 1002, customer: 'Maria Santos', vehicle: 'Civic - DEF-5678', services: ['Higienização'], status: 'aguardando', total: 150, createdAt: '2025-06-10' },
-  { id: '3', number: 1003, customer: 'João Oliveira', vehicle: 'MT-07 - GHI-9012', services: ['Lavagem Moto'], status: 'pronto', total: 40, createdAt: '2025-06-09' },
-  { id: '4', number: 1004, customer: 'Ana Costa', vehicle: 'HRV - JKL-3456', services: ['Vitrificação'], status: 'finalizando', total: 800, createdAt: '2025-06-10' },
-];
-
-const statusColors: Record<OrderStatus, string> = {
-  aguardando: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  lavando: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  finalizando: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
-  pronto: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+const TABLE = 'orders';
+const statusColors: Record<string, string> = {
+  aberta: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  andamento: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  finalizada: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  cancelada: 'bg-red-500/10 text-red-400 border-red-500/20',
 };
+const emptyForm = { client_id: '', vehicle_id: '', description: '', total: '', status: 'aberta', payment_method: 'pix' };
 
 export default function OrdensPage() {
+  const { profile, isAdmin } = useProfile();
+  const [items, setItems] = useState<Order[]>([]);
+  const [clients, setClients] = useState<Opt[]>([]);
+  const [vehicles, setVehicles] = useState<Opt[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const filtered = mockOrders.filter((o) =>
-    o.customer.toLowerCase().includes(search.toLowerCase()) ||
-    o.number.toString().includes(search)
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Order | null>(null);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [o, c, v] = await Promise.all([
+      listRows<Order>(TABLE, { orderBy: 'created_at' }),
+      listRows<Opt>('clients', { orderBy: 'name', ascending: true }),
+      listRows<Opt>('vehicles', { orderBy: 'plate', ascending: true }),
+    ]);
+    if (o.error) toast.error('Erro ao carregar OS: ' + o.error);
+    else setItems(o.data ?? []);
+    setClients(c.data ?? []);
+    setVehicles(v.data ?? []);
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const clientName = (id: string) => clients.find((c) => c.id === id)?.name ?? '—';
+  const vehiclePlate = (id: string) => vehicles.find((v) => v.id === id)?.plate ?? '—';
+  const filtered = items.filter((o) =>
+    String(o.number).includes(search) || clientName(o.client_id).toLowerCase().includes(search.toLowerCase())
   );
+
+  function openCreate() { setEditing(null); setForm(emptyForm); setDialogOpen(true); }
+  function openEdit(o: Order) {
+    setEditing(o);
+    setForm({ client_id: o.client_id, vehicle_id: o.vehicle_id, description: o.description ?? '', total: String(o.total ?? ''), status: o.status, payment_method: o.payment_method ?? 'pix' });
+    setDialogOpen(true);
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.client_id || !form.vehicle_id) { toast.error('Cliente e veículo são obrigatórios'); return; }
+    if (!profile?.company_id) { toast.error('Empresa não identificada. Refaça o login.'); return; }
+    setSaving(true);
+    const base = {
+      client_id: form.client_id, vehicle_id: form.vehicle_id, description: form.description || null,
+      total: Number(form.total) || 0, status: form.status, payment_method: form.payment_method,
+    };
+    if (editing) {
+      const { error } = await updateRow<Order>(TABLE, editing.id, base);
+      if (error) toast.error('Erro ao atualizar: ' + error);
+      else { toast.success('OS atualizada'); setDialogOpen(false); await load(); }
+    } else {
+      const nextNumber = items.reduce((m, o) => Math.max(m, o.number ?? 0), 1000) + 1;
+      const { error } = await insertRow<Order>(TABLE, { company_id: profile.company_id, number: nextNumber, kanban_status: 'aguardando', payment_status: 'pendente', ...base });
+      if (error) toast.error('Erro ao criar: ' + error);
+      else { toast.success('OS criada'); setDialogOpen(false); await load(); }
+    }
+    setSaving(false);
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await deleteRow(TABLE, deleteTarget.id);
+    if (error) toast.error('Erro ao excluir: ' + error);
+    else { toast.success('OS excluída'); setDeleteTarget(null); await load(); }
+    setDeleting(false);
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-white">Ordens de Serviço</h1>
-        <Button className="bg-blue-600 hover:bg-blue-500 text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Nova OS
+        <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
+          <Plus className="w-4 h-4 mr-2" /> Nova OS
         </Button>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-        <Input
-          placeholder="Buscar por número ou cliente..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-slate-800/50 border-slate-700 text-white"
-        />
+        <Input placeholder="Buscar por número ou cliente..." value={search} onChange={(e) => setSearch(e.target.value)}
+          className="pl-10 bg-slate-800/50 border-slate-700 text-white" />
       </div>
 
-      <div className="grid gap-4">
-        {filtered.map((order) => (
-          <Card key={order.id} className="bg-card border-border hover:border-blue-500/30 transition-colors cursor-pointer">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base text-white flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-400" />
-                  OS #{order.number}
-                </CardTitle>
-                <Badge variant="secondary" className={statusColors[order.status]}>
-                  {order.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <p className="text-sm text-white">{order.customer}</p>
-                  <p className="text-xs text-slate-500">{order.vehicle}</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {order.services.map((s) => (
-                      <span key={s} className="text-xs bg-slate-800 px-2 py-0.5 rounded text-slate-400">
-                        {s}
-                      </span>
-                    ))}
+      {loading ? (
+        <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="w-6 h-6 animate-spin" /></div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-slate-500"><p>Nenhuma ordem de serviço.</p></div>
+      ) : (
+        <div className="grid gap-4">
+          {filtered.map((order) => (
+            <Card key={order.id} className="bg-card border-border hover:border-blue-500/30 transition-colors">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base text-white flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-400" /> OS #{order.number}
+                  </CardTitle>
+                  <div className="flex items-center gap-1">
+                    <Badge variant="secondary" className={statusColors[order.status] ?? 'bg-slate-700 text-slate-300'}>{order.status}</Badge>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-400" onClick={() => openEdit(order)} aria-label="Editar"><Pencil className="w-4 h-4" /></Button>
+                    {isAdmin && <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-red-400" onClick={() => setDeleteTarget(order)} aria-label="Excluir"><Trash2 className="w-4 h-4" /></Button>}
                   </div>
                 </div>
-                <p className="text-lg font-bold text-emerald-400">
-                  R$ {order.total.toFixed(2)}
-                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm text-white">{clientName(order.client_id)}</p>
+                    <p className="text-xs text-slate-500">{vehiclePlate(order.vehicle_id)}{order.description ? ' · ' + order.description : ''}</p>
+                  </div>
+                  <p className="text-lg font-bold text-emerald-400">R$ {Number(order.total ?? 0).toFixed(2)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader><DialogTitle className="text-white">{editing ? `Editar OS #${editing.number}` : 'Nova OS'}</DialogTitle></DialogHeader>
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-slate-300">Cliente *</Label>
+              <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v ?? '' })}>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Veículo *</Label>
+              <Select value={form.vehicle_id} onValueChange={(v) => setForm({ ...form, vehicle_id: v ?? '' })}>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>{vehicles.map((v) => <SelectItem key={v.id} value={v.id}>{v.plate}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Descrição</Label>
+              <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label className="text-slate-300">Total (R$)</Label>
+                <Input type="number" step="0.01" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Status</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v ?? '' })}>
+                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="aberta">Aberta</SelectItem>
+                    <SelectItem value="andamento">Andamento</SelectItem>
+                    <SelectItem value="finalizada">Finalizada</SelectItem>
+                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Pagamento</Label>
+                <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v ?? '' })}>
+                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pix">PIX</SelectItem>
+                    <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                    <SelectItem value="cartao">Cartão</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-500 text-white">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader><DialogTitle className="text-white">Excluir OS</DialogTitle></DialogHeader>
+          <p className="text-slate-400 text-sm">Excluir a OS <span className="text-white font-medium">#{deleteTarget?.number}</span>?</p>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="text-slate-300">Cancelar</Button>
+            <Button onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-500 text-white">
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excluir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
