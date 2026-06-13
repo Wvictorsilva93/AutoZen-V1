@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 360" fill="none">
+  <defs>
+    <linearGradient id="az" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8edf2"/>
+      <stop offset="0.55" stop-color="#9fb2c0"/>
+      <stop offset="1" stop-color="#16c5d4"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16c5d4"/>
+      <stop offset="1" stop-color="#5b6b78"/>
+    </linearGradient>
+    <linearGradient id="zen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#16c5d4"/>
+      <stop offset="1" stop-color="#0fb6c4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ring -->
+  <circle cx="260" cy="150" r="120" stroke="url(#ring)" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="600 130" transform="rotate(-35 260 150)"/>
+
+  <!-- A -->
+  <path d="M205 215 L250 95 L268 95 L246 158 L214 158 Z" fill="url(#az)"/>
+  <path d="M222 168 L260 168 L252 188 L214 188 Z" fill="url(#az)"/>
+  <!-- Z -->
+  <path d="M262 95 L330 95 L330 113 L292 113 L330 197 L262 197 L262 179 L300 179 L262 95 Z" fill="url(#az)"/>
+
+  <!-- wordmark -->
+  <text x="260" y="312" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800" letter-spacing="6">
+    <tspan fill="#e8edf2">AUTO</tspan><tspan fill="url(#zen)">ZEN</tspan>
+  </text>
+  <text x="260" y="342" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#8a99a8" letter-spacing="1">Tranquilidade e eficiência na gestão do seu negócio.</text>
+</svg>

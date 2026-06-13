@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -15,10 +16,6 @@ import {
   Package,
   UserCog,
   BarChart3,
-  Camera,
-  MessageSquare,
-  Brain,
-  CreditCard,
   Shield,
   Menu,
   X,
@@ -37,10 +34,6 @@ const navigation = [
   { name: 'Estoque', href: '/estoque', icon: Package },
   { name: 'Funcionários', href: '/funcionarios', icon: UserCog },
   { name: 'Relatórios', href: '/relatorios', icon: BarChart3 },
-  { name: 'Fotos', href: '/fotos', icon: Camera },
-  { name: 'WhatsApp', href: '/whatsapp', icon: MessageSquare },
-  { name: 'IA Operacional', href: '/ia', icon: Brain },
-  { name: 'Assinatura', href: '/billing', icon: CreditCard },
 ];
 
 const adminNavigation = [
@@ -80,10 +73,7 @@ export function Sidebar() {
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-              <Car className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-bold text-white">AutoZen</span>
+            <Image src="/logo.svg" alt="AutoZen" width={140} height={40} unoptimized className="h-9 w-auto object-contain" priority />
           </Link>
           <button
             onClick={() => setMobileOpen(false)}

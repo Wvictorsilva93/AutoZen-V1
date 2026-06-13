@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Search, FileText, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Search, FileText, Pencil, Trash2, Loader2, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { listRows, insertRow, updateRow, deleteRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
+import { OsPhotosDialog } from '@/components/os-photos-dialog';
 
 interface Order {
   id: string; company_id: string; number: number; client_id: string; vehicle_id: string;
@@ -43,6 +44,7 @@ export default function OrdensPage() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [photosOs, setPhotosOs] = useState<Order | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -133,6 +135,7 @@ export default function OrdensPage() {
                   </CardTitle>
                   <div className="flex items-center gap-1">
                     <Badge variant="secondary" className={statusColors[order.status] ?? 'bg-slate-700 text-slate-300'}>{order.status}</Badge>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-cyan-400" onClick={() => setPhotosOs(order)} aria-label="Fotos"><Camera className="w-4 h-4" /></Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-400" onClick={() => openEdit(order)} aria-label="Editar"><Pencil className="w-4 h-4" /></Button>
                     {isAdmin && <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-red-400" onClick={() => setDeleteTarget(order)} aria-label="Excluir"><Trash2 className="w-4 h-4" /></Button>}
                   </div>
@@ -224,6 +227,14 @@ export default function OrdensPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <OsPhotosDialog
+        open={!!photosOs}
+        onOpenChange={(o) => !o && setPhotosOs(null)}
+        osId={photosOs?.id ?? null}
+        osNumber={photosOs?.number ?? null}
+        companyId={profile?.company_id ?? null}
+      />
     </div>
   );
 }

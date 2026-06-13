@@ -1,19 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Car, DollarSign, Calendar, FileText, Eye, EyeOff, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { getSupabaseClient } from '@/lib/supabaseClient';
-
-const statsCards = [
-  { icon: Car, label: 'Veículos em atendimento', value: '12', color: 'from-blue-500 to-cyan-500' },
-  { icon: DollarSign, label: 'Caixa do dia', value: 'R$ 2.450', color: 'from-emerald-500 to-green-500' },
-  { icon: Calendar, label: 'Agendamentos', value: '8', color: 'from-violet-500 to-purple-500' },
-  { icon: FileText, label: 'OS abertas', value: '5', color: 'from-amber-500 to-orange-500' },
-];
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState('login');
@@ -120,44 +114,18 @@ export default function LoginPage() {
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1.5s' }} />
 
       {/* Lado Esquerdo - Branding */}
-      <div className="relative flex-1 flex flex-col justify-center px-8 py-12 lg:px-16 lg:py-0">
-        <div className="max-w-lg mx-auto lg:mx-0">
+      <div className="relative flex-1 flex flex-col items-center justify-center px-8 py-12 lg:px-16">
+        <div className="flex flex-col items-center text-center">
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center glow-blue">
-              <Car className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
-              AutoZen
-            </h1>
-          </div>
-
-          {/* Title */}
-          <h2 className="text-2xl lg:text-4xl font-semibold text-white leading-tight mb-4">
-            Tranquilidade e eficiência na gestão do seu negócio
-          </h2>
-
-          {/* Subtitle */}
-          <p className="text-base lg:text-lg text-slate-400 mb-10">
-            Controle clientes, veículos, serviços, estoque, financeiro e operação em um único sistema.
-          </p>
-
-          {/* Animated stats cards */}
-          <div className="grid grid-cols-2 gap-3">
-            {statsCards.map((card, i) => (
-              <div
-                key={card.label}
-                className="glass-card rounded-xl p-4 animate-float"
-                style={{ animationDelay: `${i * 0.5}s` }}
-              >
-                <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-2 opacity-90`}>
-                  <card.icon className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-xl font-bold text-white">{card.value}</p>
-                <p className="text-xs text-slate-400">{card.label}</p>
-              </div>
-            ))}
-          </div>
+          <Image
+            src="/logo.svg"
+            alt="AutoZen"
+            width={460}
+            height={306}
+            priority
+            unoptimized
+            className="w-72 lg:w-[420px] h-auto drop-shadow-[0_0_40px_rgba(59,130,246,0.25)]"
+          />
         </div>
       </div>
 
