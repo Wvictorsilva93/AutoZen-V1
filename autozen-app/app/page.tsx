@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -117,13 +116,12 @@ export default function LoginPage() {
       <div className="relative flex-1 flex flex-col items-center justify-center px-8 py-12 lg:px-16">
         <div className="flex flex-col items-center text-center">
           {/* Logo */}
-          <Image
-            src="/logo.svg"
+          {/* Logo (usa /logo.png se existir; senão cai no /logo.svg on-brand) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
             alt="AutoZen"
-            width={460}
-            height={306}
-            priority
-            unoptimized
+            onError={(e) => { e.currentTarget.src = '/logo.svg'; }}
             className="w-72 lg:w-[420px] h-auto drop-shadow-[0_0_40px_rgba(59,130,246,0.25)]"
           />
         </div>

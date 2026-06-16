@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -21,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useProfile } from '@/hooks/useProfile';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -42,6 +42,7 @@ const adminNavigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { isSuperAdmin } = useProfile();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -73,7 +74,13 @@ export function Sidebar() {
         {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="AutoZen" width={140} height={40} unoptimized className="h-9 w-auto object-contain" priority />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="AutoZen"
+              onError={(e) => { e.currentTarget.src = '/logo.svg'; }}
+              className="h-9 w-auto object-contain"
+            />
           </Link>
           <button
             onClick={() => setMobileOpen(false)}
@@ -107,7 +114,7 @@ export function Sidebar() {
           })}
 
           <div className="pt-4 mt-4 border-t border-sidebar-border">
-            {adminNavigation.map((item) => {
+            {isSuperAdmin && adminNavigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link

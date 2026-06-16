@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { listRows } from '@/lib/db';
+import { useProfile } from '@/hooks/useProfile';
 
 interface Order { id: string; total: number; status: string; kanban_status: string; created_at: string }
 interface Tx { id: string; type: 'income' | 'expense'; amount: number; created_at: string }
@@ -27,6 +28,7 @@ function isThisMonth(iso?: string) {
 }
 
 export default function DashboardPage() {
+  const { profile } = useProfile();
   const [orders, setOrders] = useState<Order[]>([]);
   const [txs, setTxs] = useState<Tx[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -80,9 +82,11 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="glass-card rounded-xl p-6">
-        <h1 className="text-xl lg:text-2xl font-semibold text-white">{greeting}! 👋</h1>
+        <h1 className="text-xl lg:text-2xl font-semibold text-white">
+          {greeting}{profile?.name ? `, ${profile.name.split(' ')[0]}` : ''}! 👋
+        </h1>
         <p className="text-slate-400 mt-1">
-          Hoje você faturou <span className="text-emerald-400 font-medium">R$ {fatHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span> e possui{' '}
+          Bem-vindo ao AutoZen. Hoje você faturou <span className="text-emerald-400 font-medium">R$ {fatHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span> e possui{' '}
           <span className="text-blue-400 font-medium">{ativos} veículos</span> em atendimento.
         </p>
       </div>

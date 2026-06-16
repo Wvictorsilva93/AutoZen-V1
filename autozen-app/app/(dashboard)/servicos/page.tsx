@@ -21,7 +21,14 @@ interface Service {
 }
 
 const TABLE = 'services';
-const emptyForm = { name: '', price: '', estimated_time: '', category: '', vehicle_type: 'ambos' };
+const emptyForm = { name: '', price: '', hours: '', minutes: '', category: '', vehicle_type: 'ambos' };
+
+function fmtTime(min?: number | null) {
+  const t = Number(min ?? 0);
+  if (!t) return '—';
+  const h = Math.floor(t / 60), m = t % 60;
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
 
 export default function ServicosPage() {
   const { profile, isAdmin } = useProfile();
@@ -51,7 +58,8 @@ export default function ServicosPage() {
   function openCreate() { setEditing(null); setForm(emptyForm); setDialogOpen(true); }
   function openEdit(s: Service) {
     setEditing(s);
-    setForm({ name: s.name ?? '', price: String(s.price ?? ''), estimated_time: String(s.estimated_time ?? ''), category: s.category ?? '', vehicle_type: s.vehicle_type ?? 'ambos' });
+    const t = Number(s.estimated_time ?? 0);
+    setForm({ name: s.name ?? '', price: String(s.price ?? ''), hours: String(Math.floor(t / 60) || ''), minutes: String(t % 60 || ''), category: s.category ?? '', vehicle_type: s.vehicle_type ?? 'ambos' });
     setDialogOpen(true);
   }
 
@@ -60,9 +68,10 @@ export default function ServicosPage() {
     if (!form.name.trim()) { toast.error('Nome é obrigatório'); return; }
     if (!profile?.company_id) { toast.error('Empresa não identificada. Refaça o login.'); return; }
     setSaving(true);
+    const totalMin = (Number(form.hours) || 0) * 60 + (Number(form.minutes) || 0);
     const payload = {
       name: form.name, price: Number(form.price) || 0,
-      estimated_time: form.estimated_time ? Number(form.estimated_time) : null,
+      estimated_time: totalMin || null,
       category: form.category || null, vehicle_type: form.vehicle_type,
     };
     if (editing) {
@@ -124,7 +133,7 @@ export default function ServicosPage() {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <p className="text-lg font-bold text-emerald-400">R$ {Number(service.price ?? 0).toFixed(2)}</p>
-                  <p className="text-xs text-slate-500">{service.estimated_time ?? 0} min</p>
+                  <p className="text-xs text-slate-500">{fmtTime(service.estimated_time)}</p>
                 </div>
               </CardContent>
             </Card>
@@ -146,8 +155,11 @@ export default function ServicosPage() {
                 <Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Tempo (min)</Label>
-                <Input type="number" value={form.estimated_time} onChange={(e) => setForm({ ...form, estimated_time: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Label className="text-slate-300">Tempo estimado</Label>
+                <div className="flex gap-2">
+                  <Input type="number" min="0" placeholder="h" value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                  <Input type="number" min="0" max="59" placeholder="min" value={form.minutes} onChange={(e) => setForm({ ...form, minutes: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

@@ -1,32 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 360" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 400" fill="none">
   <defs>
-    <linearGradient id="az" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#e8edf2"/>
-      <stop offset="0.55" stop-color="#9fb2c0"/>
-      <stop offset="1" stop-color="#16c5d4"/>
+    <linearGradient id="silver" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#f4f7fa"/>
+      <stop offset="0.5" stop-color="#cdd8e0"/>
+      <stop offset="1" stop-color="#8a9aa8"/>
     </linearGradient>
-    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#16c5d4"/>
-      <stop offset="1" stop-color="#5b6b78"/>
+    <linearGradient id="cyan" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#5fe3ee"/>
+      <stop offset="0.5" stop-color="#16c5d4"/>
+      <stop offset="1" stop-color="#0a8e9b"/>
     </linearGradient>
-    <linearGradient id="zen" x1="0" y1="0" x2="1" y2="0">
+    <linearGradient id="ringg" x1="0.1" y1="0" x2="0.9" y2="1">
       <stop offset="0" stop-color="#16c5d4"/>
-      <stop offset="1" stop-color="#0fb6c4"/>
+      <stop offset="0.5" stop-color="#7d8d9a"/>
+      <stop offset="1" stop-color="#e8edf2"/>
     </linearGradient>
   </defs>
 
-  <!-- ring -->
-  <circle cx="260" cy="150" r="120" stroke="url(#ring)" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="600 130" transform="rotate(-35 260 150)"/>
+  <!-- broken ring -->
+  <path d="M 388 78 A 130 130 0 1 1 168 96" stroke="url(#ringg)" stroke-width="11" stroke-linecap="round" fill="none"/>
 
-  <!-- A -->
-  <path d="M205 215 L250 95 L268 95 L246 158 L214 158 Z" fill="url(#az)"/>
-  <path d="M222 168 L260 168 L252 188 L214 188 Z" fill="url(#az)"/>
-  <!-- Z -->
-  <path d="M262 95 L330 95 L330 113 L292 113 L330 197 L262 197 L262 179 L300 179 L262 95 Z" fill="url(#az)"/>
+  <!-- A (silver) -->
+  <path d="M 196 250 L 248 95 L 272 95 L 250 160 L 224 160 Z" fill="url(#silver)"/>
+  <path d="M 232 172 L 274 172 L 266 196 L 224 196 Z" fill="url(#silver)"/>
+  <path d="M 250 160 L 272 95 L 286 138 L 268 196 Z" fill="url(#silver)" opacity="0.9"/>
+
+  <!-- Z (cyan) -->
+  <path d="M 270 95 L 360 95 L 360 116 L 312 116 L 360 230 L 270 230 L 270 209 L 320 209 L 270 116 Z" fill="url(#cyan)"/>
 
   <!-- wordmark -->
-  <text x="260" y="312" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800" letter-spacing="6">
-    <tspan fill="#e8edf2">AUTO</tspan><tspan fill="url(#zen)">ZEN</tspan>
+  <text x="280" y="330" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="74" font-weight="800" letter-spacing="8">
+    <tspan fill="url(#silver)">AUTO</tspan><tspan fill="url(#cyan)">ZEN</tspan>
   </text>
-  <text x="260" y="342" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#8a99a8" letter-spacing="1">Tranquilidade e eficiência na gestão do seu negócio.</text>
+  <text x="280" y="366" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#8a99a8" letter-spacing="1.5">Tranquilidade e eficiência na gestão do seu negócio.</text>
 </svg>
