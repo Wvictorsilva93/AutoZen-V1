@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { listRows, updateRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
+import { maskCNPJ, maskPhone } from '@/lib/masks';
 
 interface Company {
   id: string; name: string; responsible_name: string | null; cnpj: string | null; phone: string | null;
@@ -198,13 +199,13 @@ export default function AdminPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Telefone</Label>
-                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: maskPhone(e.target.value) })} className="bg-slate-800/50 border-slate-700 text-white" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-slate-300">CNPJ</Label>
-                <Input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Input value={form.cnpj} onChange={(e) => setForm({ ...form, cnpj: maskCNPJ(e.target.value) })} className="bg-slate-800/50 border-slate-700 text-white" />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Plano</Label>

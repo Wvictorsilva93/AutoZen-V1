@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Clock, User, Car, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Clock, User, Car, Pencil, Trash2, Loader2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -104,6 +104,21 @@ export default function AgendamentoPage() {
     setDeleting(false);
   }
 
+  async function generateOS(s: Schedule) {
+    if (!profile?.company_id) { toast.error('Empresa não identificada.'); return; }
+    if (!s.client_id || !s.vehicle_id) { toast.error('Agendamento precisa de cliente e veículo'); return; }
+    const { data: orders } = await listRows<{ number: number }>('orders', { orderBy: 'number' });
+    const nextNumber = (orders ?? []).reduce((m, o) => Math.max(m, o.number ?? 0), 1000) + 1;
+    const { error } = await insertRow('orders', {
+      company_id: profile.company_id, number: nextNumber, client_id: s.client_id, vehicle_id: s.vehicle_id,
+      kanban_status: 'aguardando', status: 'aberta', payment_status: 'pendente', total: 0,
+    });
+    if (error) { toast.error('Erro ao gerar OS: ' + error); return; }
+    await updateRow(TABLE, s.id, { status: 'in_service' });
+    toast.success(`OS #${nextNumber} gerada a partir do agendamento`);
+    await load();
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -139,6 +154,7 @@ export default function AgendamentoPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Badge variant="secondary" className={statusColors[apt.status] ?? 'bg-slate-700 text-slate-300'}>{statusLabel[apt.status] ?? apt.status}</Badge>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-emerald-400" onClick={() => generateOS(apt)} aria-label="Gerar OS" title="Gerar OS"><FileText className="w-4 h-4" /></Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-400" onClick={() => openEdit(apt)} aria-label="Editar"><Pencil className="w-4 h-4" /></Button>
                     {isAdmin && <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-red-400" onClick={() => setDeleteTarget(apt)} aria-label="Excluir"><Trash2 className="w-4 h-4" /></Button>}
                   </div>

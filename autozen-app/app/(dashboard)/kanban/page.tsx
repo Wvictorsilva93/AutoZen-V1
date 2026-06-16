@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { listRows, updateRow } from '@/lib/db';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 
 interface Order {
   id: string; number: number; client_id: string; vehicle_id: string;
@@ -66,6 +67,17 @@ export default function KanbanPage() {
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  // Realtime: recarrega quando qualquer OS muda (outro usuário movendo cards)
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    const channel = supabase
+      .channel('kanban-orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { load(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [load]);
 
   const client = (id: string) => clients.find((c) => c.id === id);
   const vehiclePlate = (id: string) => vehicles.find((v) => v.id === id)?.plate ?? '';

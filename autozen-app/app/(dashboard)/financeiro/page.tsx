@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Plus, Trash2, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Plus, Trash2, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,10 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { listRows, insertRow, deleteRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
+import { exportCSV } from '@/lib/export';
 
 interface Tx {
   id: string; company_id: string; type: 'income' | 'expense'; description: string;
-  amount: number; payment_method: string | null; transaction_date: string | null;
+  amount: number; payment_method: string | null; transaction_date: string | null; created_at?: string;
 }
 
 const TABLE = 'financial_transactions';
@@ -75,9 +76,17 @@ export default function FinanceiroPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-white">Financeiro</h1>
-        <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
-          <Plus className="w-4 h-4 mr-2" /> Novo Lançamento
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={() => {
+            const rows = items.map((t) => ({ tipo: t.type === 'income' ? 'entrada' : 'saída', descricao: t.description, valor: Number(t.amount || 0).toFixed(2), metodo: t.payment_method ?? '', data: t.created_at ? new Date(t.created_at).toLocaleString('pt-BR') : '' }));
+            if (rows.length) exportCSV('autozen-financeiro', rows); else toast.error('Nada para exportar');
+          }} className="text-emerald-400 hover:bg-emerald-500/10">
+            <Download className="w-4 h-4 mr-2" /> CSV
+          </Button>
+          <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
+            <Plus className="w-4 h-4 mr-2" /> Novo Lançamento
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

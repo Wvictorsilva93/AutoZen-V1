@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Search, UserCog, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Search, UserCog, Pencil, Trash2, Loader2, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { listRows, insertRow, updateRow, deleteRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
+import { maskPhone } from '@/lib/masks';
 
 interface Employee {
   id: string; company_id: string; name: string; phone: string;
@@ -33,6 +35,10 @@ export default function FuncionariosPage() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [invite, setInvite] = useState({ name: '', email: '', password: '', phone: '', role: 'funcionario' });
+  const [inviting, setInviting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,13 +88,44 @@ export default function FuncionariosPage() {
     setDeleting(false);
   }
 
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    if (!invite.name || !invite.email || !invite.password) { toast.error('Preencha nome, email e senha'); return; }
+    if (invite.password.length < 6) { toast.error('Senha deve ter ao menos 6 caracteres'); return; }
+    setInviting(true);
+    try {
+      const res = await fetch('/api/employees/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invite),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? 'Erro ao criar acesso'); }
+      else {
+        toast.success('Acesso criado! O funcionário já pode entrar.');
+        setInviteOpen(false);
+        setInvite({ name: '', email: '', password: '', phone: '', role: 'funcionario' });
+      }
+    } catch {
+      toast.error('Falha de conexão');
+    }
+    setInviting(false);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-white">Funcionários</h1>
-        <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
-          <Plus className="w-4 h-4 mr-2" /> Novo Funcionário
-        </Button>
+        <div className="flex gap-2">
+          {isAdmin && (
+            <Button onClick={() => setInviteOpen(true)} variant="ghost" className="text-blue-400 hover:bg-blue-500/10">
+              <KeyRound className="w-4 h-4 mr-2" /> Criar acesso
+            </Button>
+          )}
+          <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
+            <Plus className="w-4 h-4 mr-2" /> Novo Funcionário
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -138,7 +175,7 @@ export default function FuncionariosPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-slate-300">Telefone</Label>
-                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: maskPhone(e.target.value) })} className="bg-slate-800/50 border-slate-700 text-white" />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Comissão (%)</Label>
@@ -168,6 +205,50 @@ export default function FuncionariosPage() {
               {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excluir'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader><DialogTitle className="text-white">Criar acesso de login</DialogTitle></DialogHeader>
+          <form onSubmit={handleInvite} className="space-y-4">
+            <p className="text-xs text-slate-400">Cria um login para o funcionário acessar o sistema na sua empresa.</p>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Nome *</Label>
+              <Input value={invite.name} onChange={(e) => setInvite({ ...invite, name: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" required />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-slate-300">Email *</Label>
+                <Input type="email" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" required />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Telefone</Label>
+                <Input value={invite.phone} onChange={(e) => setInvite({ ...invite, phone: maskPhone(e.target.value) })} className="bg-slate-800/50 border-slate-700 text-white" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-slate-300">Senha *</Label>
+                <Input type="text" value={invite.password} onChange={(e) => setInvite({ ...invite, password: e.target.value })} placeholder="mín. 6 caracteres" className="bg-slate-800/50 border-slate-700 text-white" required />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Perfil</Label>
+                <Select value={invite.role} onValueChange={(v) => setInvite({ ...invite, role: v ?? 'funcionario' })}>
+                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="funcionario">Funcionário</SelectItem>
+                    <SelectItem value="admin_empresa">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={inviting} className="bg-blue-600 hover:bg-blue-500 text-white">
+                {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Criar acesso'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

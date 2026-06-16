@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { listRows, insertRow, updateRow, deleteRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
+import { maskPlate } from '@/lib/masks';
 
 interface Vehicle {
   id: string;
@@ -159,7 +160,7 @@ export default function VeiculosPage() {
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
               <Label className="text-slate-300">Placa *</Label>
-              <Input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" required />
+              <Input value={form.plate} onChange={(e) => setForm({ ...form, plate: maskPlate(e.target.value) })} className="bg-slate-800/50 border-slate-700 text-white" required />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">

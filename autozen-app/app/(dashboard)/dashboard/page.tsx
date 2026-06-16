@@ -69,6 +69,20 @@ export default function DashboardPage() {
     return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
   }).length;
 
+  // Receita dos últimos 7 dias
+  const last7 = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dayTotal = orders
+      .filter((o) => {
+        const od = new Date(o.created_at);
+        return od.getFullYear() === d.getFullYear() && od.getMonth() === d.getMonth() && od.getDate() === d.getDate();
+      })
+      .reduce((a, o) => a + Number(o.total || 0), 0);
+    return { label: d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), value: dayTotal };
+  });
+  const maxDay = Math.max(1, ...last7.map((d) => d.value));
+
   const cards = [
     { title: 'Faturamento Hoje', value: `R$ ${fatHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'text-emerald-400' },
     { title: 'Faturamento Mês', value: `R$ ${fatMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingUp, color: 'text-blue-400' },
@@ -109,6 +123,26 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-card border-border">
+              <CardHeader><CardTitle className="text-sm font-medium text-white">Receita dos últimos 7 dias</CardTitle></CardHeader>
+              <CardContent>
+                <div className="flex items-end justify-between gap-2 h-40">
+                  {last7.map((d, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                      <div className="w-full flex items-end justify-center h-32">
+                        <div
+                          className="w-full max-w-[28px] rounded-t-md bg-gradient-to-t from-blue-600 to-cyan-400 transition-all"
+                          style={{ height: `${Math.max(4, (d.value / maxDay) * 100)}%` }}
+                          title={`R$ ${d.value.toLocaleString('pt-BR')}`}
+                        />
+                      </div>
+                      <span className="text-[10px] text-slate-500 capitalize">{d.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
               <CardHeader><CardTitle className="text-sm font-medium text-white">Resumo Financeiro (mês)</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30">
@@ -125,7 +159,9 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-card border-border">
               <CardHeader><CardTitle className="text-sm font-medium text-white">Operação</CardTitle></CardHeader>
               <CardContent className="space-y-3">

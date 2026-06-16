@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { listRows, insertRow, updateRow, deleteRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
+import { maskPhone } from '@/lib/masks';
 
 interface Client {
   id: string;
@@ -43,6 +44,8 @@ export default function ClientesPage() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 12;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,10 +56,13 @@ export default function ClientesPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { setPage(1); }, [search]);
 
   const filtered = clients.filter((c) =>
     c.name?.toLowerCase().includes(search.toLowerCase())
   );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   function openCreate() {
     setEditing(null);
@@ -133,7 +139,7 @@ export default function ClientesPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {filtered.map((cliente) => (
+          {pageItems.map((cliente) => (
             <Card key={cliente.id} className="bg-card border-border hover:border-blue-500/30 transition-colors">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
@@ -171,6 +177,13 @@ export default function ClientesPage() {
               </CardContent>
             </Card>
           ))}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="text-slate-300">Anterior</Button>
+              <span className="text-xs text-slate-400">Página {page} de {totalPages}</span>
+              <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="text-slate-300">Próxima</Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -188,7 +201,7 @@ export default function ClientesPage() {
             </div>
             <div className="space-y-2">
               <Label className="text-slate-300">Telefone / WhatsApp</Label>
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: maskPhone(e.target.value) })}
                 className="bg-slate-800/50 border-slate-700 text-white" />
             </div>
             <div className="space-y-2">

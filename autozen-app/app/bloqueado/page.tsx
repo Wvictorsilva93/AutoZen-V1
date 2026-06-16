@@ -35,7 +35,7 @@ export default function BloqueadoPage() {
         <div className="space-y-3">
           <Button
             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white"
-            onClick={() => window.open('https://wa.me/5511999999999?text=' + encodeURIComponent('Olá! Quero regularizar minha assinatura do AutoZen.'), '_blank')}
+            onClick={() => window.open('https://wa.me/5565999850765?text=' + encodeURIComponent('Olá! Quero regularizar minha assinatura do AutoZen.'), '_blank')}
           >
             <MessageSquare className="w-4 h-4 mr-2" /> Falar com o suporte
           </Button>

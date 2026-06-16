@@ -3,11 +3,13 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
-import { BarChart3, TrendingUp, Users, Wrench, DollarSign, FileText, Loader2 } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Wrench, DollarSign, FileText, Loader2, Download, Printer } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { listRows } from '@/lib/db';
+import { exportCSV, printReport } from '@/lib/export';
 
-interface Order { id: string; total: number; status: string; service_ids: string[]; created_at: string }
+interface Order { id: string; number: number; total: number; status: string; service_ids: string[]; created_at: string }
 interface Service { id: string; name: string }
 interface Client { id: string; name: string; total_visits: number; is_recurrent: boolean }
 
@@ -51,6 +53,29 @@ export default function RelatoriosPage() {
 
   const topClients = [...clients].sort((a, b) => (b.total_visits ?? 0) - (a.total_visits ?? 0)).slice(0, 5);
 
+  function handleCSV() {
+    const rows = orders.map((o) => ({
+      OS: o.number, status: o.status, total: Number(o.total || 0).toFixed(2),
+      data: new Date(o.created_at).toLocaleString('pt-BR'),
+    }));
+    if (!rows.length) return;
+    exportCSV('autozen-relatorio-os', rows);
+  }
+
+  function handlePDF() {
+    const body = `
+      <table><thead><tr><th>Indicador</th><th>Valor</th></tr></thead><tbody>
+        <tr><td>Faturamento Total</td><td>R$ ${fatTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td></tr>
+        <tr><td>Faturamento do Mês</td><td>R$ ${fatMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td></tr>
+        <tr><td>Ticket Médio</td><td>R$ ${ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td></tr>
+        <tr><td>Total de OS</td><td>${orders.length}</td></tr>
+        <tr><td>Clientes Recorrentes</td><td>${recorrentes.length}</td></tr>
+      </tbody></table>
+      <p class="tot">Serviços mais vendidos</p>
+      <table><tbody>${topServices.map(([id, n]) => `<tr><td>${serviceName(id)}</td><td>${n}x</td></tr>`).join('')}</tbody></table>`;
+    printReport('Relatório AutoZen', body);
+  }
+
   const summary = [
     { title: 'Faturamento Total', value: `R$ ${fatTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'text-emerald-400' },
     { title: 'Faturamento Mês', value: `R$ ${fatMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingUp, color: 'text-blue-400' },
@@ -61,7 +86,17 @@ export default function RelatoriosPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white">Relatórios</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-white">Relatórios</h1>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={handleCSV} className="text-emerald-400 hover:bg-emerald-500/10">
+            <Download className="w-4 h-4 mr-2" /> CSV
+          </Button>
+          <Button variant="ghost" onClick={handlePDF} className="text-blue-400 hover:bg-blue-500/10">
+            <Printer className="w-4 h-4 mr-2" /> Imprimir / PDF
+          </Button>
+        </div>
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="w-6 h-6 animate-spin" /></div>
