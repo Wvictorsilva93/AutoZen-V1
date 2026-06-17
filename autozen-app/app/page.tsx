@@ -116,13 +116,13 @@ export default function LoginPage() {
       <div className="relative flex-1 flex flex-col items-center justify-center px-8 py-12 lg:px-16">
         <div className="flex flex-col items-center text-center">
           {/* Logo */}
-          {/* Logo (usa /logo.png se existir; senão cai no /logo.svg on-brand) */}
+          {/* Logo oficial AutoZen — renderizada nativamente, sem alteração */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.png"
+            src="/logo-autozen.png"
             alt="AutoZen"
             onError={(e) => { e.currentTarget.src = '/logo.svg'; }}
-            className="w-72 lg:w-[420px] h-auto drop-shadow-[0_0_40px_rgba(59,130,246,0.25)]"
+            className="w-[290px] h-auto"
           />
         </div>
       </div>

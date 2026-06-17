@@ -76,10 +76,10 @@ export function Sidebar() {
           <Link href="/dashboard" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo.png"
+              src="/logo-autozen.png"
               alt="AutoZen"
               onError={(e) => { e.currentTarget.src = '/logo.svg'; }}
-              className="h-9 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
           </Link>
           <button

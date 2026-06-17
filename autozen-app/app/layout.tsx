@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { PWARegister } from "@/components/pwa-register";
+import { SplashScreen } from "@/components/splash-screen";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={cn("dark h-full antialiased font-sans", geist.variable)}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <SplashScreen />
         <PWARegister />
         {children}
       </body>
