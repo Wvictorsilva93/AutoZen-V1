@@ -190,6 +190,59 @@ body {
   animation: wave 12s ease-in-out infinite;
 }
 
+/* Logo float suave */
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-logo-float {
+  animation: logo-float 8s ease-in-out infinite;
+}
+
+/* Glow pulsante na borda do card */
+@keyframes border-glow {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+.animate-border-glow {
+  animation: border-glow 4s ease-in-out infinite;
+}
+
+/* Fade in com translate */
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out both;
+}
+
+/* Wave lenta */
+@keyframes wave-slow {
+  0% { d: path("M0,200 C320,320 480,120 720,200 C960,280 1120,80 1440,200 L1440,400 L0,400 Z"); }
+  33% { d: path("M0,210 C320,130 480,290 720,190 C960,90 1120,250 1440,210 L1440,400 L0,400 Z"); }
+  66% { d: path("M0,190 C320,300 480,110 720,210 C960,270 1120,90 1440,190 L1440,400 L0,400 Z"); }
+  100% { d: path("M0,200 C320,320 480,120 720,200 C960,280 1120,80 1440,200 L1440,400 L0,400 Z"); }
+}
+
+.animate-wave-slow {
+  animation: wave-slow 18s ease-in-out infinite;
+}
+
+@keyframes wave-slower {
+  0% { d: path("M0,220 C320,140 480,300 720,200 C960,100 1120,260 1440,220 L1440,400 L0,400 Z"); }
+  33% { d: path("M0,230 C320,150 480,310 720,210 C960,110 1120,270 1440,230 L1440,400 L0,400 Z"); }
+  66% { d: path("M0,210 C320,130 480,290 720,190 C960,90 1120,250 1440,210 L1440,400 L0,400 Z"); }
+  100% { d: path("M0,220 C320,140 480,300 720,200 C960,100 1120,260 1440,220 L1440,400 L0,400 Z"); }
+}
+
+.animate-wave-slower {
+  animation: wave-slower 22s ease-in-out infinite;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
