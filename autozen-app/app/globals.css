@@ -145,6 +145,51 @@ body {
   animation: splashIn 1.6s ease-in-out;
 }
 
+/* Partículas flutuantes */
+@keyframes particle {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(50px);
+    opacity: 0;
+  }
+}
+
+.animate-particle {
+  animation: particle linear infinite;
+}
+
+/* Onda animada */
+@keyframes wave {
+  0% {
+    d: path("M0,160 C320,280 480,80 720,160 C960,240 1120,80 1440,160 L1440,320 L0,320 Z");
+  }
+  25% {
+    d: path("M0,180 C320,80 480,240 720,140 C960,40 1120,180 1440,180 L1440,320 L0,320 Z");
+  }
+  50% {
+    d: path("M0,140 C320,240 480,60 720,180 C960,300 1120,100 1440,140 L1440,320 L0,320 Z");
+  }
+  75% {
+    d: path("M0,180 C320,80 480,240 720,140 C960,40 1120,180 1440,180 L1440,320 L0,320 Z");
+  }
+  100% {
+    d: path("M0,160 C320,280 480,80 720,160 C960,240 1120,80 1440,160 L1440,320 L0,320 Z");
+  }
+}
+
+.animate-wave {
+  animation: wave 12s ease-in-out infinite;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
