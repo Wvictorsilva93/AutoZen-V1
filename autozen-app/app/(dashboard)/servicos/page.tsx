@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { listRows, insertRow, updateRow, deleteRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
+import OsFormDialog from '@/components/os-form-dialog';
 
 interface Service {
   id: string; company_id: string; name: string; description: string | null;
@@ -41,6 +42,7 @@ export default function ServicosPage() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Service | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showNewOs, setShowNewOs] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,9 +101,14 @@ export default function ServicosPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-white">Serviços</h1>
-        <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
-          <Plus className="w-4 h-4 mr-2" /> Novo Serviço
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
+            <Plus className="w-4 h-4 mr-2" /> Novo Serviço
+          </Button>
+          <Button onClick={() => setShowNewOs(true)} variant="outline" className="border-blue-600/50 text-blue-400 hover:bg-blue-600/10">
+            <Plus className="w-4 h-4 mr-2" /> Nova OS
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -200,6 +207,8 @@ export default function ServicosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <OsFormDialog open={showNewOs} onOpenChange={setShowNewOs} onSaved={() => {}} />
     </div>
   );
 }
