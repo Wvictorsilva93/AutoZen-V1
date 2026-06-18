@@ -9,7 +9,6 @@ import {
   Car,
   Wrench,
   Calendar,
-  FileText,
   Columns3,
   DollarSign,
   Package,
@@ -18,6 +17,8 @@ import {
   Shield,
   Menu,
   X,
+  Trophy,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
@@ -25,11 +26,12 @@ import { useProfile } from '@/hooks/useProfile';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Clientes', href: '/clientes', icon: Users },
+  { name: 'Ranking', href: '/clientes/ranking', icon: Trophy },
   { name: 'Veículos', href: '/veiculos', icon: Car },
   { name: 'Serviços', href: '/servicos', icon: Wrench },
   { name: 'Agendamento', href: '/agendamento', icon: Calendar },
-  { name: 'Ordens de Serviço', href: '/ordens', icon: FileText },
-  { name: 'Kanban', href: '/kanban', icon: Columns3 },
+  { name: 'Kanban (OS)', href: '/kanban', icon: Columns3 },
+  { name: 'Check-in', href: '/checkin', icon: ClipboardCheck },
   { name: 'Financeiro', href: '/financeiro', icon: DollarSign },
   { name: 'Estoque', href: '/estoque', icon: Package },
   { name: 'Funcionários', href: '/funcionarios', icon: UserCog },

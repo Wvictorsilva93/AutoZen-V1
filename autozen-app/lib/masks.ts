@@ -30,17 +30,4 @@ export function maskCNPJ(v: string): string {
     .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
-/** Recebe dígitos e devolve string monetária "1.234,56". */
-export function maskCurrency(v: string): string {
-  const d = (v ?? '').replace(/\D/g, '');
-  if (!d) return '';
-  const n = (parseInt(d, 10) / 100);
-  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
 
-/** Converte string mascarada "1.234,56" em número 1234.56. */
-export function parseCurrency(v: string): number {
-  if (!v) return 0;
-  const clean = v.replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
-  return Number(clean) || 0;
-}
