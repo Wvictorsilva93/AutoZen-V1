@@ -149,8 +149,8 @@ export default function OrdensPage() {
                     <span>{fmtDate(order.created_at)}</span>
                   </div>
                   <div className="flex items-center gap-2 pt-1">
-                    <Badge className={`text-[10px] border ${PAYMENT_COLORS[order.payment_status ?? 'pendente'] ?? ''}`}>
-                      {order.payment_status === 'pago' ? 'Pago' : 'Pendente'}
+                    <Badge className={`text-[10px] border ${order.payment_method ? PAYMENT_COLORS.pago : PAYMENT_COLORS.pendente}`}>
+                      {order.payment_method ? 'Pago' : 'Pendente'}
                     </Badge>
                     <div className="flex-1" />
                     <Link href="/kanban" className="text-blue-400 hover:text-blue-300 transition-colors" title="Ver no Kanban">

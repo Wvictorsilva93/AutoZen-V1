@@ -159,7 +159,7 @@ export default function KanbanPage() {
     emAtendimento: orders.filter((o) => ['aguardando', 'lavando', 'finalizando'].includes(o.kanban_status)).length,
     finalizadas: orders.filter((o) => o.kanban_status === 'pronto').length,
     faturamentoDia: orders
-      .filter((o) => o.payment_status === 'pago' && isToday(o.updated_at))
+      .filter((o) => o.payment_method && isToday(o.updated_at))
       .reduce((sum, o) => sum + Number(o.total ?? 0), 0),
     veiculosPatio: orders.filter((o) => o.kanban_status !== 'pronto').length,
     ticketMedio: (() => {
@@ -203,7 +203,7 @@ export default function KanbanPage() {
     if (!showPayment) return;
     setPaying(true);
     const { error } = await updateRow('orders', showPayment.id, {
-      payment_status: 'pago', payment_method: payMethod,
+      payment_status: 'pendente', payment_method: payMethod,
     });
     if (error) { toast.error('Erro ao processar pagamento: ' + error); setPaying(false); return; }
     toast.success(`Pagamento registrado — OS #${showPayment.number}`);
@@ -270,7 +270,7 @@ export default function KanbanPage() {
       <pre>${svList || 'Nenhum'}</pre>
       <hr style="margin:20px 0"/>
       <p><strong>Total:</strong> R$ ${Number(order.total ?? 0).toFixed(2)}</p>
-      <p><strong>Pagamento:</strong> ${order.payment_status === 'pago' ? 'Pago' : 'Pendente'}</p>
+      <p><strong>Pagamento:</strong> ${order.payment_method ? 'Pago' : 'Pendente'}</p>
       <script>window.print();window.close();</script>
       </body></html>
     `);
@@ -445,8 +445,8 @@ export default function KanbanPage() {
                             Pagamento: {selectedOrder.payment_method}
                           </p>
                         )}
-                        <Badge className={`mt-1 text-xs ${selectedOrder.payment_status === 'pago' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                          {selectedOrder.payment_status === 'pago' ? 'Pago' : 'Pendente'}
+                        <Badge className={`mt-1 text-xs ${selectedOrder.payment_method ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                          {selectedOrder.payment_method ? 'Pago' : 'Pendente'}
                         </Badge>
                       </div>
                     )}

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 interface CardData {
   id: string; number: number; client_id: string; vehicle_id: string;
   kanban_status: string; created_at: string; updated_at: string;
-  description?: string; total?: number; payment_status?: string;
+  description?: string; total?: number; payment_status?: string; payment_method?: string;
 }
 
 interface KanbanCardProps {
@@ -62,9 +62,9 @@ export default function KanbanCard({
             <span className="text-xs font-mono text-slate-500">#{order.number}</span>
           </div>
           <div className="flex items-center gap-1">
-            {order.payment_status && (
-              <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 border ${paymentColors[order.payment_status] ?? ''}`}>
-                {order.payment_status === 'pago' ? 'Pago' : order.payment_status === 'pendente' ? 'Pend.' : order.payment_status}
+            {(order.payment_status || order.payment_method) && (
+              <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 border ${order.payment_method ? paymentColors.pago : paymentColors.pendente}`}>
+                {order.payment_method ? 'Pago' : 'Pend.'}
               </Badge>
             )}
             <Car className="w-3 h-3 text-blue-400" />
