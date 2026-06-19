@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   Search, Building2, MoreHorizontal, ExternalLink, Ban, CheckCircle2,
-  RefreshCw, MessageSquare, Trash2, UserCog, Shield, ArrowUpDown,
+  RefreshCw, MessageSquare, Trash2, UserCog, Shield, Key,
 } from 'lucide-react'
 import type { CommandCenterData } from './command-center'
 
@@ -18,7 +18,7 @@ export function ClientControl({ data }: { data: CommandCenterData }) {
     if (filterStatus === 'blocked') list = list.filter(c => c.blocked)
     if (search) {
       const q = search.toLowerCase()
-      list = list.filter(c => c.name.toLowerCase().includes(q) || c.responsible_name?.toLowerCase().includes(q))
+      list = list.filter(c => c.name.toLowerCase().includes(q) || c.responsible_name?.toLowerCase().includes(q) || c.cnpj?.includes(q))
     }
     return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }, [data, search, filterStatus])
@@ -38,7 +38,7 @@ export function ClientControl({ data }: { data: CommandCenterData }) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Controle de Clientes</h2>
-              <p className="text-xs text-slate-500">Gerenciamento completo de empresas</p>
+              <p className="text-xs text-slate-500">{companies.length} empresas · {data.companies.filter(c => c.active && !c.blocked).length} ativas</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -50,7 +50,7 @@ export function ClientControl({ data }: { data: CommandCenterData }) {
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-          <input type="text" placeholder="Buscar por nome ou responsável..."
+          <input type="text" placeholder="Buscar empresa, responsável ou CNPJ..."
             value={search} onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"
           />
@@ -77,12 +77,12 @@ export function ClientControl({ data }: { data: CommandCenterData }) {
                 >
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600/20 to-cyan-400/10 flex items-center justify-center text-xs font-bold text-blue-400">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600/20 to-cyan-400/10 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
                         {company.name.charAt(0).toUpperCase()}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">{company.name}</p>
-                        <p className="text-xs text-slate-600">{company.cnpj || '—'}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{company.name}</p>
+                        <p className="text-xs text-slate-600 truncate">{company.cnpj || '—'}</p>
                       </div>
                     </div>
                   </td>
@@ -102,12 +102,13 @@ export function ClientControl({ data }: { data: CommandCenterData }) {
                     )}
                   </td>
                   <td className="py-3 px-3">
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ActionBtn icon={ExternalLink} label="Entrar como cliente" />
-                      <ActionBtn icon={RefreshCw} label="Alterar plano" />
-                      <ActionBtn icon={MessageSquare} label="Enviar mensagem" />
-                      <ActionBtn icon={company.blocked ? CheckCircle2 : Ban} label={company.blocked ? 'Desbloquear' : 'Bloquear'} />
-                      <ActionBtn icon={Trash2} label="Excluir" />
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ActionBtn icon={ExternalLink} label="Entrar como Cliente" color="hover:text-emerald-400 hover:bg-emerald-500/20" />
+                      <ActionBtn icon={RefreshCw} label="Alterar Plano" color="hover:text-blue-400 hover:bg-blue-500/20" />
+                      <ActionBtn icon={MessageSquare} label="Enviar Mensagem" color="hover:text-violet-400 hover:bg-violet-500/20" />
+                      <ActionBtn icon={Key} label="Resetar Senha" color="hover:text-amber-400 hover:bg-amber-500/20" />
+                      <ActionBtn icon={company.blocked ? CheckCircle2 : Ban} label={company.blocked ? 'Desbloquear' : 'Bloquear'} color="hover:text-red-400 hover:bg-red-500/20" />
+                      <ActionBtn icon={Trash2} label="Excluir Empresa" color="hover:text-red-500 hover:bg-red-500/20" />
                     </div>
                   </td>
                 </motion.tr>
@@ -135,9 +136,9 @@ function FilterBtn({ label, active, onClick }: { label: string; active: boolean;
   )
 }
 
-function ActionBtn({ icon: Icon, label }: { icon: any; label: string }) {
+function ActionBtn({ icon: Icon, label, color }: { icon: any; label: string; color: string }) {
   return (
-    <button className="p-1.5 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all" title={label}>
+    <button className={`p-1.5 rounded-lg text-slate-500 transition-all ${color}`} title={label}>
       <Icon className="w-4 h-4" />
     </button>
   )

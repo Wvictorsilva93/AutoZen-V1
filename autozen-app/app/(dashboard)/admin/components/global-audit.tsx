@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { ScrollText, UserPlus, LogIn, Settings, AlertTriangle, Shield, Edit, Trash2, Ban, CheckCircle2 } from 'lucide-react'
+import { ScrollText, UserPlus, LogIn, Settings, AlertTriangle, Shield, Edit, Trash2, Ban, CheckCircle2, Monitor, Globe } from 'lucide-react'
 import type { CommandCenterData } from './command-center'
 
 const actionIcons: Record<string, any> = {
@@ -22,9 +22,19 @@ const actionColors: Record<string, string> = {
   security_alert: 'text-amber-400 bg-amber-500/10',
 }
 
+function parseBrowser(ua: string | null) {
+  if (!ua) return null
+  if (ua.includes('Chrome') && !ua.includes('Edg')) return 'Chrome'
+  if (ua.includes('Firefox')) return 'Firefox'
+  if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari'
+  if (ua.includes('Edg')) return 'Edge'
+  if (ua.includes('MSIE') || ua.includes('Trident')) return 'IE'
+  return null
+}
+
 export function GlobalAudit({ data }: { data: CommandCenterData }) {
   const logs = useMemo(() =>
-    data.auditLogs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 15),
+    data.auditLogs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 20),
   [data])
 
   return (
@@ -47,7 +57,7 @@ export function GlobalAudit({ data }: { data: CommandCenterData }) {
       <div className="relative">
         <div className="absolute left-4 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/20 via-blue-500/5 to-transparent" />
 
-        <div className="space-y-1 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
+        <div className="space-y-1 max-h-96 overflow-y-auto pr-1 scrollbar-thin">
           {logs.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-sm text-slate-600">Nenhum evento de auditoria</p>
@@ -56,6 +66,7 @@ export function GlobalAudit({ data }: { data: CommandCenterData }) {
             logs.map((log, i) => {
               const Icon = actionIcons[log.action] || Shield
               const color = actionColors[log.action] || 'text-slate-400 bg-slate-500/10'
+              const browser = parseBrowser(log.user_agent)
               return (
                 <motion.div
                   key={log.id}
@@ -73,15 +84,24 @@ export function GlobalAudit({ data }: { data: CommandCenterData }) {
                       {' '}{formatAction(log.action)}{' '}
                       {log.target && <span className="text-blue-400">{log.target}</span>}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
                       <p className="text-xs text-slate-600">
                         {new Date(log.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </p>
+                      {log.ip && (
+                        <div className="flex items-center gap-1 text-xs text-slate-600" title={log.ip}>
+                          <Globe className="w-3 h-3" />
+                          {log.ip}
+                        </div>
+                      )}
+                      {browser && (
+                        <div className="flex items-center gap-1 text-xs text-slate-600">
+                          <Monitor className="w-3 h-3" />
+                          {browser}
+                        </div>
+                      )}
                       {log.company_name && (
-                        <>
-                          <span className="text-slate-700">·</span>
-                          <span className="text-xs text-slate-600">{log.company_name}</span>
-                        </>
+                        <span className="text-xs text-slate-600">· {log.company_name}</span>
                       )}
                     </div>
                   </div>
