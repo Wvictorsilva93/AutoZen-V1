@@ -10,7 +10,7 @@ export default function DashboardLayout({
 }) {
   return (
     <AccessGuard>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-screen overflow-hidden bg-premium-gradient">
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <TopBar />
