@@ -47,7 +47,7 @@ export interface Customer {
 export interface Vehicle {
   id: string;
   company_id: string;
-  customer_id: string;
+  client_id: string;
   plate: string;
   brand: string;
   model: string;
@@ -73,7 +73,7 @@ export interface Order {
   id: string;
   company_id: string;
   order_number: number;
-  customer_id: string;
+  client_id: string;
   vehicle_id: string;
   employee_id?: string;
   status: OrderStatus;
@@ -130,7 +130,7 @@ export interface Employee {
 export interface Appointment {
   id: string;
   company_id: string;
-  customer_id: string;
+  client_id: string;
   vehicle_id: string;
   service_id: string;
   employee_id?: string;

@@ -19,7 +19,7 @@ import {
 
 interface Order {
   id: string; total: number; status: string; kanban_status: string;
-  created_at: string; updated_at: string; customer_id?: string; vehicle_id?: string;
+  created_at: string; updated_at: string; client_id?: string; vehicle_id?: string;
 }
 interface Tx { id: string; type: 'income' | 'expense'; amount: number; created_at: string }
 interface Schedule {
@@ -27,7 +27,7 @@ interface Schedule {
   scheduled_date: string; time: string; status: string
 }
 interface Customer { id: string; name: string; phone?: string }
-interface Vehicle { id: string; customer_id: string; plate: string; brand: string; model: string }
+interface Vehicle { id: string; client_id: string; plate: string; brand: string; model: string }
 interface Service { id: string; name: string }
 
 function isToday(iso?: string) {

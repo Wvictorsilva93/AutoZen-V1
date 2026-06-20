@@ -30,7 +30,7 @@ export async function getOfflineDB() {
 
       // Local cache stores
       const stores = [
-        'customers',
+        'clients',
         'vehicles',
         'services',
         'orders',

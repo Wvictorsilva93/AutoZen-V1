@@ -20,7 +20,7 @@ interface Client {
 }
 
 interface Order {
-  id: string; customer_id: string; total: number; created_at: string;
+  id: string; client_id: string; total: number; created_at: string;
 }
 
 interface ClientRank extends Client {
@@ -51,11 +51,11 @@ export default function RankingPage() {
     const orderMap = new Map<string, { count: number; total: number; lastDate: string | null }>();
 
     for (const o of orders) {
-      const entry = orderMap.get(o.customer_id) ?? { count: 0, total: 0, lastDate: null as string | null };
+      const entry = orderMap.get(o.client_id) ?? { count: 0, total: 0, lastDate: null as string | null };
       entry.count++;
       entry.total += Number(o.total || 0);
       if (!entry.lastDate || o.created_at > entry.lastDate) entry.lastDate = o.created_at;
-      orderMap.set(o.customer_id, entry);
+      orderMap.set(o.client_id, entry);
     }
 
     const ranked: ClientRank[] = (clientData ?? [])
