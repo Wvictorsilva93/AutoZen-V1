@@ -23,7 +23,7 @@ interface Order {
 }
 interface Tx { id: string; type: 'income' | 'expense'; amount: number; created_at: string }
 interface Schedule {
-  id: string; customer_id: string; vehicle_id: string; service_id: string;
+  id: string; client_id: string; vehicle_id: string; service_id: string;
   scheduled_date: string; time: string; status: string
 }
 interface Customer { id: string; name: string; phone?: string }
@@ -59,7 +59,7 @@ export default function DashboardPage() {
       listRows<Order>('orders', { orderBy: 'created_at' }),
       listRows<Tx>('financial_transactions', { orderBy: 'created_at' }),
       listRows<Schedule>('schedules', { orderBy: 'scheduled_date', ascending: true }),
-      listRows<Customer>('customers'),
+      listRows<Customer>('clients'),
       listRows<Vehicle>('vehicles'),
       listRows<Service>('services'),
     ]);
@@ -297,7 +297,7 @@ export default function DashboardPage() {
                       <div key={s.id} className="flex items-start gap-3 p-2 rounded-lg bg-slate-800/30">
                         <div className="text-xs font-mono text-slate-400 mt-0.5 min-w-[40px]">{s.time || '--:--'}</div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white truncate">{customerName(s.customer_id)}</p>
+                          <p className="text-sm text-white truncate">{customerName(s.client_id)}</p>
                           <p className="text-xs text-slate-400 truncate">{serviceName(s.service_id)}</p>
                         </div>
                         <Badge className={scheduleBadge[s.status] ?? 'bg-slate-500/20 text-slate-400 border-0'}>

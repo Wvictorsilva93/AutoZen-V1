@@ -57,7 +57,7 @@ export default function OrdensPage() {
     setLoading(true);
     const [oRes, cRes, vRes] = await Promise.all([
       listRows<OrderRow>('orders', { orderBy: 'created_at' }),
-      listRows<ClientRow>('customers'),
+      listRows<ClientRow>('clients'),
       listRows<VehicleRow>('vehicles'),
     ]);
     if (oRes.error) toast.error('Erro ao carregar ordens: ' + oRes.error);

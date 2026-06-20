@@ -12,7 +12,7 @@ import { listRows, insertRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
 
 interface ClientOpt { id: string; name: string; phone?: string | null }
-interface VehicleOpt { id: string; plate?: string; brand?: string; model?: string; color?: string; year?: string; customer_id?: string }
+interface VehicleOpt { id: string; plate?: string; brand?: string; model?: string; color?: string; year?: string; client_id?: string }
 interface ServiceOpt { id: string; name: string; price: number }
 interface EmployeeOpt { id: string; name: string }
 
@@ -44,7 +44,7 @@ export default function OsFormDialog({ open, onOpenChange, onSaved }: OsFormDial
 
   const [newServiceId, setNewServiceId] = useState('');
 
-  const filteredVehicles = vehicles.filter((v) => !clientId || v.customer_id === clientId);
+  const filteredVehicles = vehicles.filter((v) => !clientId || v.client_id === clientId);
 
   const totalValue = selectedServices.reduce((sum, s) => sum + Number(s.price) * (s.quantity || 1), 0);
 
