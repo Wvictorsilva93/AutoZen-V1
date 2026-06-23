@@ -33,7 +33,7 @@ export default function LoginPage() {
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: unknown } }) => {
       if (session) window.location.href = '/dashboard';
     });
   }, []);
