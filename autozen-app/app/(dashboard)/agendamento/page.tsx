@@ -19,7 +19,7 @@ interface Schedule {
   id: string; company_id: string; client_id: string | null; vehicle_id: string | null;
   scheduled_date: string; scheduled_time: string | null; notes: string | null; status: string;
 }
-interface Opt { id: string; name?: string; plate?: string }
+interface Opt { id: string; name?: string; plate?: string; brand?: string; model?: string }
 
 const TABLE = 'schedules';
 const statusColors: Record<string, string> = {
@@ -190,7 +190,7 @@ export default function AgendamentoPage() {
               <Label className="text-slate-300">Veículo</Label>
               <Select value={form.vehicle_id} onValueChange={(v) => setForm({ ...form, vehicle_id: v ?? '' })}>
                 <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{vehicles.map((v) => <SelectItem key={v.id} value={v.id}>{v.plate}</SelectItem>)}</SelectContent>
+                <SelectContent>{vehicles.map((v) => <SelectItem key={v.id} value={v.id}>{[v.brand, v.model, v.plate].filter(Boolean).join(' ')}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
