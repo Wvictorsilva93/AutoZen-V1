@@ -94,7 +94,7 @@ export default function OsFormDialog({ open, onOpenChange, onSaved }: OsFormDial
       employee_id: employeeId || null,
       kanban_status: 'aguardando',
       status: 'aberta',
-      payment_status: 'pendente',
+      payment_status: 'pending',
       total: totalValue,
       description: notes || null,
     });

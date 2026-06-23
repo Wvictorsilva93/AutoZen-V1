@@ -30,6 +30,14 @@ export default function LoginPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) window.location.href = '/dashboard';
+    });
+  }, []);
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);

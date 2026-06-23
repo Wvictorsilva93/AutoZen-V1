@@ -203,7 +203,7 @@ export default function KanbanPage() {
     if (!showPayment) return;
     setPaying(true);
     const { error } = await updateRow('orders', showPayment.id, {
-      payment_status: 'pendente', payment_method: payMethod,
+      payment_status: 'paid', payment_method: payMethod,
     });
     if (error) { toast.error('Erro ao processar pagamento: ' + error); setPaying(false); return; }
     toast.success(`Pagamento registrado — OS #${showPayment.number}`);

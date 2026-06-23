@@ -111,7 +111,7 @@ export default function AgendamentoPage() {
     const nextNumber = (orders ?? []).reduce((m, o) => Math.max(m, o.number ?? 0), 1000) + 1;
     const { error } = await insertRow('orders', {
       company_id: profile.company_id, number: nextNumber, client_id: s.client_id, vehicle_id: s.vehicle_id,
-      kanban_status: 'aguardando', status: 'aberta', payment_status: 'pendente', total: 0,
+      kanban_status: 'aguardando', status: 'aberta', payment_status: 'pending', total: 0,
     });
     if (error) { toast.error('Erro ao gerar OS: ' + error); return; }
     await updateRow(TABLE, s.id, { status: 'in_service' });

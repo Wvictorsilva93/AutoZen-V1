@@ -9,11 +9,11 @@ interface BrazilMapProps {
 }
 
 const regions = [
-  { name: 'Norte', x: 50, y: 15, color: '#3b82f6', companies: '~12%' },
-  { name: 'Nordeste', x: 55, y: 35, color: '#8b5cf6', companies: '~28%' },
-  { name: 'Centro-Oeste', x: 45, y: 45, color: '#10b981', companies: '~10%' },
-  { name: 'Sudeste', x: 50, y: 55, color: '#f59e0b', companies: '~38%' },
-  { name: 'Sul', x: 48, y: 72, color: '#06b6d4', companies: '~12%' },
+  { name: 'MT - Mato Grosso', x: 38, y: 35, color: '#10b981', companies: '~5%' },
+  { name: 'GO - Goiás', x: 48, y: 42, color: '#f59e0b', companies: '~8%' },
+  { name: 'SP - São Paulo', x: 52, y: 58, color: '#3b82f6', companies: '~45%' },
+  { name: 'PR - Paraná', x: 48, y: 68, color: '#8b5cf6', companies: '~22%' },
+  { name: 'MG - Minas Gerais', x: 58, y: 50, color: '#06b6d4', companies: '~20%' },
 ]
 
 export function BrazilMapSection({ data }: BrazilMapProps) {
@@ -34,7 +34,7 @@ export function BrazilMapSection({ data }: BrazilMapProps) {
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Mapa do Brasil</h2>
-            <p className="text-xs text-slate-500">Presença nacional</p>
+            <p className="text-xs text-slate-500">Estados-alvo (MT, GO, SP, PR, MG)</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
