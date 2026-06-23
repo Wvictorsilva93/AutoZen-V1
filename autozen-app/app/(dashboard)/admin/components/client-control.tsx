@@ -1,145 +1,179 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Search, Building2, MoreHorizontal, ExternalLink, Ban, CheckCircle2,
-  RefreshCw, MessageSquare, Trash2, UserCog, Shield, Key,
+  Users, Search, Shield, ShieldOff, CreditCard, Key,
+  Mail, Trash2, Eye, ChevronDown, CheckCircle2, XCircle,
+  Building2, Phone, Clock, AlertTriangle, ExternalLink
 } from 'lucide-react'
 import type { CommandCenterData } from './command-center'
 
+interface ClientAction {
+  label: string
+  icon: any
+  color: string
+  description: string
+}
+
+const actions: ClientAction[] = [
+  { label: 'Acessar Painel', icon: ExternalLink, color: 'blue', description: 'Entrar como cliente' },
+  { label: 'Suspender', icon: ShieldOff, color: 'red', description: 'Bloquear acesso' },
+  { label: 'Reativar', icon: Shield, color: 'emerald', description: 'Restaurar acesso' },
+  { label: 'Alterar Plano', icon: CreditCard, color: 'violet', description: 'Mudar assinatura' },
+  { label: 'Resetar Senha', icon: Key, color: 'amber', description: 'Enviar email de reset' },
+  { label: 'Enviar Mensagem', icon: Mail, color: 'cyan', description: 'Notificação manual' },
+  { label: 'Excluir', icon: Trash2, color: 'red', description: 'Remover permanentemente' },
+]
+
+const actionColors: Record<string, string> = {
+  blue: 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20',
+  red: 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20',
+  emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20',
+  violet: 'bg-violet-500/10 text-violet-400 border-violet-500/20 hover:bg-violet-500/20',
+  amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20',
+  cyan: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20',
+}
+
 export function ClientControl({ data }: { data: CommandCenterData }) {
   const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'blocked'>('all')
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null)
 
-  const companies = useMemo(() => {
-    let list = [...data.companies]
-    if (filterStatus === 'active') list = list.filter(c => c.active && !c.blocked)
-    if (filterStatus === 'blocked') list = list.filter(c => c.blocked)
-    if (search) {
-      const q = search.toLowerCase()
-      list = list.filter(c => c.name.toLowerCase().includes(q) || c.responsible_name?.toLowerCase().includes(q) || c.cnpj?.includes(q))
-    }
-    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  }, [data, search, filterStatus])
+  const companies = data.companies
+    .filter(c => {
+      if (!search) return true
+      return c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.responsible_name?.toLowerCase().includes(search.toLowerCase()) ||
+        c.cnpj?.includes(search)
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  const selected = data.companies.find(c => c.id === selectedCompany)
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.6, duration: 0.5 }}
-      className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/90 to-slate-900/50 overflow-hidden"
+      transition={{ duration: 0.5 }}
+      className="rounded-2xl border border-white/5 bg-slate-900/50 backdrop-blur-xl p-6"
     >
-      <div className="p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600/20 to-blue-600/5 border border-blue-500/20 flex items-center justify-center">
-              <UserCog className="w-5 h-5 text-blue-400" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Controle de Clientes</h2>
-              <p className="text-xs text-slate-500">{companies.length} empresas · {data.companies.filter(c => c.active && !c.blocked).length} ativas</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <FilterBtn label="Todos" active={filterStatus === 'all'} onClick={() => setFilterStatus('all')} />
-            <FilterBtn label="Ativos" active={filterStatus === 'active'} onClick={() => setFilterStatus('active')} />
-            <FilterBtn label="Bloqueados" active={filterStatus === 'blocked'} onClick={() => setFilterStatus('blocked')} />
-          </div>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Users className="w-5 h-5 text-blue-400" />
+            Controle de Clientes
+          </h3>
+          <p className="text-sm text-slate-500">Gerencie acesso, planos e ações de cada empresa</p>
         </div>
+      </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
-          <input type="text" placeholder="Buscar empresa, responsável ou CNPJ..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"
-          />
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/5">
-                <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-600">Empresa</th>
-                <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-600">Responsável</th>
-                <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-600">Plano</th>
-                <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-600">Status</th>
-                <th className="py-2.5 px-3 text-left text-xs font-medium text-slate-600">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {companies.map((company, i) => (
-                <motion.tr key={company.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.02 }}
-                  className="group hover:bg-white/[0.02] transition-colors"
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-1">
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Buscar empresa..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50"
+            />
+          </div>
+          <div className="space-y-1 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
+            {companies.slice(0, 20).map(company => {
+              const isActive = company.active && !company.blocked
+              const isTrial = company.trial_end && new Date(company.trial_end) > new Date()
+              return (
+                <button
+                  key={company.id}
+                  onClick={() => setSelectedCompany(company.id === selectedCompany ? null : company.id)}
+                  className={`w-full text-left p-3 rounded-xl transition-all ${
+                    selectedCompany === company.id
+                      ? 'bg-blue-500/10 border border-blue-500/20'
+                      : 'bg-white/[0.02] border border-transparent hover:bg-white/[0.04]'
+                  }`}
                 >
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600/20 to-cyan-400/10 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0">
-                        {company.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{company.name}</p>
-                        <p className="text-xs text-slate-600 truncate">{company.cnpj || '—'}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-400">
+                      {company.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{company.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                        {!isActive && <span className="w-1.5 h-1.5 rounded-full bg-red-400" />}
+                        {isTrial && <span className="text-[9px] text-amber-400">Trial</span>}
+                        <span className="text-[10px] text-slate-600">{company.plan || 'Grátis'}</span>
                       </div>
                     </div>
-                  </td>
-                  <td className="py-3 px-3 text-sm text-slate-400">{company.responsible_name || '—'}</td>
-                  <td className="py-3 px-3">
-                    <span className="px-2 py-0.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400">
-                      {company.plan || 'Sem plano'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3">
-                    {company.blocked ? (
-                      <span className="flex items-center gap-1 text-xs text-red-400"><Ban className="w-3 h-3" /> Bloqueado</span>
-                    ) : company.active ? (
-                      <span className="flex items-center gap-1 text-xs text-emerald-400"><CheckCircle2 className="w-3 h-3" /> Ativo</span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-xs text-amber-400"><Shield className="w-3 h-3" /> Inativo</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ActionBtn icon={ExternalLink} label="Entrar como Cliente" color="hover:text-emerald-400 hover:bg-emerald-500/20" />
-                      <ActionBtn icon={RefreshCw} label="Alterar Plano" color="hover:text-blue-400 hover:bg-blue-500/20" />
-                      <ActionBtn icon={MessageSquare} label="Enviar Mensagem" color="hover:text-violet-400 hover:bg-violet-500/20" />
-                      <ActionBtn icon={Key} label="Resetar Senha" color="hover:text-amber-400 hover:bg-amber-500/20" />
-                      <ActionBtn icon={company.blocked ? CheckCircle2 : Ban} label={company.blocked ? 'Desbloquear' : 'Bloquear'} color="hover:text-red-400 hover:bg-red-500/20" />
-                      <ActionBtn icon={Trash2} label="Excluir Empresa" color="hover:text-red-500 hover:bg-red-500/20" />
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-              {companies.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-sm text-slate-600">Nenhuma empresa encontrada</td></tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="lg:col-span-2">
+          {selected ? (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/20 flex items-center justify-center text-lg font-bold text-blue-400">
+                    {selected.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-white">{selected.name}</h4>
+                    <p className="text-sm text-slate-400">
+                      {selected.responsible_name} · {selected.city || '—'}/{selected.state || '—'}
+                    </p>
+                    <p className="text-xs text-slate-600">CNPJ: {selected.cnpj || 'Não informado'} · {selected.phone || 'Sem telefone'}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <InfoBox label="Plano" value={selected.plan || 'Grátis'} />
+                  <InfoBox label="Status" value={selected.blocked ? 'Bloqueado' : selected.active ? 'Ativo' : 'Inativo'} />
+                  <InfoBox label="Criada" value={new Date(selected.created_at).toLocaleDateString('pt-BR')} />
+                  <InfoBox label="Atualizada" value={new Date(selected.updated_at).toLocaleDateString('pt-BR')} />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Ações disponíveis</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {actions.map(action => {
+                    const Icon = action.icon
+                    return (
+                      <button
+                        key={action.label}
+                        className={`p-3 rounded-xl border text-left transition-all ${actionColors[action.color]}`}
+                      >
+                        <Icon className="w-4 h-4 mb-1.5" />
+                        <p className="text-xs font-medium">{action.label}</p>
+                        <p className="text-[10px] opacity-60">{action.description}</p>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <Building2 className="w-12 h-12 text-slate-700 mb-3" />
+              <p className="text-sm text-slate-500">Selecione uma empresa para gerenciar</p>
+              <p className="text-xs text-slate-600 mt-1">Clique em uma empresa da lista ao lado</p>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
   )
 }
 
-function FilterBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <button onClick={onClick}
-      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-        active ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-500 hover:text-white bg-white/5'
-      }`}
-    >
-      {label}
-    </button>
-  )
-}
-
-function ActionBtn({ icon: Icon, label, color }: { icon: any; label: string; color: string }) {
-  return (
-    <button className={`p-1.5 rounded-lg text-slate-500 transition-all ${color}`} title={label}>
-      <Icon className="w-4 h-4" />
-    </button>
+    <div className="p-2 rounded-lg bg-white/[0.03]">
+      <p className="text-[10px] text-slate-600">{label}</p>
+      <p className="text-xs font-medium text-white">{value}</p>
+    </div>
   )
 }

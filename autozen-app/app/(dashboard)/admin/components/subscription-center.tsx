@@ -2,164 +2,125 @@
 
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import {
-  Crown, Star, Zap, Shield, TrendingUp, Users,
-  DollarSign, PieChart
-} from 'lucide-react'
+import { CreditCard, Check, Star, Zap, Crown, Building2 } from 'lucide-react'
 import type { CommandCenterData } from './command-center'
 
-const colorStyles = {
-  slate: { bg: 'bg-slate-500/20', border: 'border-slate-500/20', text: 'text-slate-400', bar: 'bg-slate-500' },
-  blue: { bg: 'bg-blue-500/20', border: 'border-blue-500/20', text: 'text-blue-400', bar: 'bg-blue-500' },
-  violet: { bg: 'bg-violet-500/20', border: 'border-violet-500/20', text: 'text-violet-400', bar: 'bg-violet-500' },
-  amber: { bg: 'bg-amber-500/20', border: 'border-amber-500/20', text: 'text-amber-400', bar: 'bg-amber-500' },
-  emerald: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/20', text: 'text-emerald-400', bar: 'bg-emerald-500' },
-  cyan: { bg: 'bg-cyan-500/20', border: 'border-cyan-500/20', text: 'text-cyan-400', bar: 'bg-cyan-500' },
-}
-
-function PlanCard({ name, slug, icon: Icon, color, count, total, revenue }: {
-  name: string; slug: string; icon: any; color: keyof typeof colorStyles; count: number; total: number; revenue: number
-}) {
-  const c = colorStyles[color]
-  const pct = total > 0 ? (count / total) * 100 : 0
-  return (
-    <div className="relative overflow-hidden rounded-xl border border-white/5 bg-gradient-to-br from-slate-900/90 to-slate-900/50 p-4 group hover:border-white/10 transition-all duration-300">
-      <div className="absolute -top-6 -right-6 w-12 h-12 rounded-full bg-white/5 blur-xl group-hover:blur-2xl transition-all duration-500" />
-      <div className="relative space-y-3">
-        <div className="flex items-center justify-between">
-          <div className={`w-9 h-9 rounded-lg ${c.bg} ${c.border} flex items-center justify-center`}>
-            <Icon className={`w-5 h-5 ${c.text}`} />
-          </div>
-          <span className={`text-xs font-medium ${c.text}`}>{pct.toFixed(1)}%</span>
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-white">{name}</p>
-          <p className="text-xs text-slate-500 mt-0.5 capitalize">{slug}</p>
-        </div>
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500">Empresas</span>
-            <span className="text-white font-medium">{count}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500">Receita</span>
-            <span className="text-white font-mono font-medium">R$ {(revenue / 100).toFixed(2)}</span>
-          </div>
-        </div>
-        <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className={`h-full rounded-full ${c.bar}`}
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function SubscriptionCenter({ data }: { data: CommandCenterData }) {
-  const { planStats, total, totalRevenue } = useMemo(() => {
-    const companies = data.companies.filter(c => c.active && !c.blocked)
-    const total = companies.length || 1
-    const plans: Record<string, { count: number; revenue: number }> = {}
-    for (const c of companies) {
-      const p = c.plan || 'sem_plano'
-      if (!plans[p]) plans[p] = { count: 0, revenue: 0 }
-      plans[p].count++
-    }
-    const plansConfig = data.plans
-    const planStats = plansConfig.map(p => ({
-      name: p.name,
-      slug: p.slug,
-      count: plans[p.slug]?.count || 0,
-      revenue: (plans[p.slug]?.count || 0) * p.price,
-    }))
-    const semPlano = plans['sem_plano']
-    if (semPlano) {
-      planStats.push({ name: 'Sem Plano', slug: 'sem_plano', count: semPlano.count, revenue: 0 })
-    }
-    const totalRevenue = planStats.reduce((a, p) => a + p.revenue, 0)
-    return { planStats, total, totalRevenue }
-  }, [data])
+  const planColors: Record<string, { gradient: string; border: string; icon: string; badge: string }> = {
+    basico: { gradient: 'from-slate-600/20 to-slate-600/5', border: 'border-slate-500/20', icon: 'text-slate-400', badge: 'bg-slate-500/20 text-slate-400' },
+    professional: { gradient: 'from-blue-600/20 to-blue-600/5', border: 'border-blue-500/20', icon: 'text-blue-400', badge: 'bg-blue-500/20 text-blue-400' },
+    premium: { gradient: 'from-violet-600/20 to-violet-600/5', border: 'border-violet-500/20', icon: 'text-violet-400', badge: 'bg-violet-500/20 text-violet-400' },
+    enterprise: { gradient: 'from-amber-600/20 to-amber-600/5', border: 'border-amber-500/20', icon: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-400' },
+  }
 
-  const planColors: Record<string, keyof typeof colorStyles> = {
-    basic: 'slate', pro: 'blue', premium: 'violet', enterprise: 'amber',
+  const defaultColors: { gradient: string; border: string; icon: string; badge: string } = {
+    gradient: 'from-cyan-600/20 to-cyan-600/5', border: 'border-cyan-500/20', icon: 'text-cyan-400', badge: 'bg-cyan-500/20 text-cyan-400',
   }
 
   const planIcons: Record<string, any> = {
-    basic: Zap, pro: Star, premium: Crown, enterprise: Shield,
+    basico: Star, professional: Zap, premium: Crown, enterprise: Building2,
   }
 
-  const summaryCards = [
-    { label: 'Total de Assinaturas', value: total, icon: Users, color: 'blue' as const },
-    { label: 'Receita Recorrente', value: `R$ ${(totalRevenue / 100).toFixed(2)}`, icon: DollarSign, color: 'emerald' as const },
-    { label: 'Ticket Médio', value: `R$ ${((totalRevenue / total) / 100).toFixed(2)}`, icon: TrendingUp, color: 'violet' as const },
-    { label: 'Planos Ativos', value: planStats.filter(p => p.count > 0).length, icon: PieChart, color: 'cyan' as const },
-  ]
+  const planStats = useMemo(() => {
+    return data.plans.map(plan => ({
+      ...plan,
+      companyCount: data.companies.filter(c =>
+        (c.plan === plan.slug || c.plan === plan.name) && c.active && !c.blocked
+      ).length,
+    })).sort((a, b) => b.companyCount - a.companyCount)
+  }, [data.plans, data.companies])
+
+  const totalCompanies = data.companies.filter(c => c.active && !c.blocked).length || 1
+
+  const donutData = planStats.map((p, i) => ({
+    name: p.name,
+    value: p.companyCount,
+    percentage: Math.round((p.companyCount / totalCompanies) * 100),
+    colors: ['#3b82f6', '#8b5cf6', '#f59e0b', '#06b6d4', '#64748b'],
+  }))
+
+  const donutSegments = donutData.reduce<{ start: number; end: number; color: string }[]>((acc, d, i) => {
+    const start = i === 0 ? 0 : acc[i - 1].end
+    const end = start + (d.percentage / 100) * 360
+    acc.push({ start, end, color: d.colors[i % d.colors.length] })
+    return acc
+  }, [])
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.5 }}
-      className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/90 to-slate-900/50 overflow-hidden"
+      transition={{ duration: 0.5 }}
+      className="rounded-2xl border border-white/5 bg-slate-900/50 backdrop-blur-xl p-6"
     >
-      <div className="p-6 space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-600/20 to-violet-600/5 border border-violet-500/20 flex items-center justify-center">
-            <Crown className="w-5 h-5 text-violet-400" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-white">Centro de Assinaturas</h2>
-            <p className="text-xs text-slate-500">Distribuição de planos e receitas</p>
+      <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-5">
+        <CreditCard className="w-5 h-5 text-violet-400" />
+        Central de Assinaturas
+      </h3>
+
+      <div className="flex items-center justify-center mb-5">
+        <div className="relative w-32 h-32">
+          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+            {donutSegments.map((seg, i) => {
+              const r = 38
+              const circ = 2 * Math.PI * r
+              const dash = ((seg.end - seg.start) / 360) * circ
+              const offset = (seg.start / 360) * circ
+              return (
+                <circle key={i} cx="50" cy="50" r={r} fill="none" stroke={seg.color} strokeWidth="8"
+                  strokeDasharray={`${dash} ${circ - dash}`} strokeDashoffset={-offset}
+                  className="transition-all duration-700" opacity={0.85} />
+              )
+            })}
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <p className="text-2xl font-bold text-white">{totalCompanies}</p>
+            <p className="text-[9px] text-slate-500">empresas</p>
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {summaryCards.map((card, i) => (
+      <div className="space-y-3">
+        {planStats.map((plan, i) => {
+          const colors = planColors[plan.slug] || defaultColors
+          const Icon = planIcons[plan.slug] || Star
+          return (
             <motion.div
-              key={card.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * i, duration: 0.4 }}
-              className="rounded-xl border border-white/5 bg-white/[0.02] p-3"
+              key={plan.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className={`p-3 rounded-xl border ${colors.border} bg-gradient-to-r ${colors.gradient}`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <card.icon className="w-3.5 h-3.5 text-slate-500" />
-                <p className="text-[10px] uppercase tracking-wider text-slate-600">{card.label}</p>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <Icon className={`w-4 h-4 ${colors.icon}`} />
+                  <span className="text-sm font-medium text-white">{plan.name}</span>
+                </div>
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${colors.badge}`}>
+                  {plan.companyCount} empresas
+                </span>
               </div>
-              <p className="text-lg font-bold text-white font-mono">{card.value}</p>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {planStats.map((plan, i) => {
-            const slug = plan.slug as keyof typeof planColors
-            const color = planColors[slug] || 'slate'
-            const icon = planIcons[slug] || Users
-            return (
-              <motion.div
-                key={plan.slug}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06, duration: 0.4 }}
-              >
-                <PlanCard
-                  name={plan.name}
-                  slug={plan.slug}
-                  icon={icon}
-                  color={color}
-                  count={plan.count}
-                  total={total}
-                  revenue={plan.revenue}
+              <div className="w-full bg-white/[0.05] rounded-full h-1.5">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${Math.round((plan.companyCount / totalCompanies) * 100)}%`,
+                    backgroundColor: donutData[i]?.colors[i % donutData[i].colors.length],
+                  }}
                 />
-              </motion.div>
-            )
-          })}
-        </div>
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[10px] text-slate-600">
+                  R$ {(plan.price / 100).toFixed(2)}/mês
+                </span>
+                <span className="text-[10px] text-slate-600">
+                  {Math.round((plan.companyCount / totalCompanies) * 100)}%
+                </span>
+              </div>
+            </motion.div>
+          )
+        })}
       </div>
     </motion.div>
   )

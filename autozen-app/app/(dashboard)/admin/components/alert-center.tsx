@@ -2,111 +2,161 @@
 
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Bell, AlertTriangle, Info, AlertCircle, X } from 'lucide-react'
+import {
+  Bell, AlertTriangle, AlertCircle, Info, CheckCircle2,
+  Clock, Shield, TrendingDown, CreditCard, Users
+} from 'lucide-react'
 import type { CommandCenterData } from './command-center'
 
+interface Alert {
+  id: string
+  title: string
+  description: string
+  severity: 'critical' | 'warning' | 'info' | 'success'
+  icon: any
+  timestamp: Date
+  company?: string
+}
+
+const severityConfig: Record<string, { color: string; bg: string; border: string }> = {
+  critical: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+  warning: { color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+  info: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+  success: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+}
+
 export function AlertCenter({ data }: { data: CommandCenterData }) {
-  const alerts = useMemo(() => {
-    const result: { id: string; type: 'critical' | 'warning' | 'info'; message: string; time: string }[] = []
+  const alerts = useMemo<Alert[]>(() => {
+    const result: Alert[] = []
 
-    const delinquents = data.companies.filter(c => c.active && !c.blocked && c.subscription_end && new Date(c.subscription_end) < new Date())
-    delinquents.forEach(c => {
-      result.push({
+    // Critical: delinquent companies
+    data.companies
+      .filter(c => c.active && !c.blocked && c.subscription_end && new Date(c.subscription_end) < new Date())
+      .forEach(c => result.push({
         id: `del-${c.id}`,
-        type: 'critical',
-        message: `${c.name} — assinatura vencida em ${new Date(c.subscription_end!).toLocaleDateString('pt-BR')}`,
-        time: c.subscription_end!,
-      })
-    })
+        title: 'Assinatura expirada',
+        description: `${c.name} — pagamento atrasado`,
+        severity: 'critical',
+        icon: CreditCard,
+        timestamp: new Date(c.subscription_end!),
+        company: c.name,
+      }))
 
-    const highPriority = data.tickets.filter(t => t.priority === 'high' && t.status === 'open')
-    highPriority.forEach(t => {
-      result.push({
-        id: `ticket-${t.id}`,
-        type: 'warning',
-        message: `Ticket prioritário: ${t.subject}`,
-        time: t.created_at,
-      })
-    })
+    // Warning: trials ending soon
+    data.companies
+      .filter(c => c.trial_end && new Date(c.trial_end) > new Date() && new Date(c.trial_end).getTime() - Date.now() < 3 * 86400000)
+      .forEach(c => result.push({
+        id: `trial-${c.id}`,
+        title: 'Trial expirando',
+        description: `${c.name} — termina em ${Math.ceil((new Date(c.trial_end!).getTime() - Date.now()) / 86400000)} dias`,
+        severity: 'warning',
+        icon: Clock,
+        timestamp: new Date(c.trial_end!),
+        company: c.name,
+      }))
 
-    const recentBlocks = data.companies.filter(c => c.blocked && new Date(c.updated_at) > new Date(Date.now() - 86400000 * 7))
-    recentBlocks.forEach(c => {
-      result.push({
+    // Warning: blocked companies
+    data.companies
+      .filter(c => c.blocked)
+      .forEach(c => result.push({
         id: `block-${c.id}`,
-        type: 'warning',
-        message: `${c.name} foi bloqueada recentemente`,
-        time: c.updated_at,
-      })
-    })
+        title: 'Empresa bloqueada',
+        description: `${c.name} — acesso suspenso`,
+        severity: 'warning',
+        icon: Shield,
+        timestamp: new Date(c.updated_at),
+        company: c.name,
+      }))
 
-    result.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-    return result.slice(0, 8)
+    // Info: recent audit entries
+    data.auditLogs.slice(0, 5).forEach(a => result.push({
+      id: `audit-${a.id}`,
+      title: a.action,
+      description: `${a.user_name} → ${a.target}`,
+      severity: 'info',
+      icon: Info,
+      timestamp: new Date(a.created_at),
+      company: a.company_name,
+    }))
+
+    // Success: new companies this week
+    const weekAgo = Date.now() - 7 * 86400000
+    data.companies
+      .filter(c => new Date(c.created_at).getTime() > weekAgo)
+      .forEach(c => result.push({
+        id: `new-${c.id}`,
+        title: 'Nova empresa',
+        description: `${c.name} cadastrada`,
+        severity: 'success',
+        icon: CheckCircle2,
+        timestamp: new Date(c.created_at),
+        company: c.name,
+      }))
+
+    return result.sort((a, b) => {
+      const order = { critical: 0, warning: 1, info: 2, success: 3 }
+      return (order[a.severity] - order[b.severity]) || b.timestamp.getTime() - a.timestamp.getTime()
+    })
   }, [data])
+
+  const criticals = alerts.filter(a => a.severity === 'critical').length
+  const warnings = alerts.filter(a => a.severity === 'warning').length
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.5 }}
-      className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/90 to-slate-900/50 p-6 space-y-4"
+      transition={{ duration: 0.5 }}
+      className="rounded-2xl border border-white/5 bg-slate-900/50 backdrop-blur-xl p-6"
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-600/20 to-amber-600/5 border border-amber-500/20 flex items-center justify-center">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <Bell className="w-5 h-5 text-amber-400" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-white">Central de Alertas</h2>
-            <p className="text-xs text-slate-500">{alerts.length} notificações ativas</p>
-          </div>
+            Central de Alertas
+          </h3>
+          <p className="text-sm text-slate-500">
+            {criticals > 0 && <span className="text-red-400">{criticals} críticos</span>}
+            {criticals > 0 && warnings > 0 && ' · '}
+            {warnings > 0 && <span className="text-amber-400">{warnings} avisos</span>}
+            {!criticals && !warnings && <span className="text-emerald-400">Tudo normal</span>}
+          </p>
         </div>
-        {alerts.filter(a => a.type === 'critical').length > 0 && (
-          <div className="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20">
-            <span className="text-xs font-medium text-red-400">{alerts.filter(a => a.type === 'critical').length} críticos</span>
-          </div>
-        )}
+        <span className="text-xs text-slate-600">{alerts.length} alertas</span>
       </div>
 
-      <div className="space-y-2 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
-        {alerts.length === 0 ? (
-          <div className="py-8 text-center">
-            <CheckCircle className="w-8 h-8 mx-auto text-emerald-500/50 mb-2" />
-            <p className="text-sm text-slate-600">Nenhum alerta no momento</p>
-          </div>
-        ) : (
-          alerts.map((alert, i) => (
+      <div className="space-y-2 max-h-96 overflow-y-auto pr-1 scrollbar-thin">
+        {alerts.slice(0, 15).map((alert, i) => {
+          const sev = severityConfig[alert.severity]
+          const Icon = alert.icon
+          return (
             <motion.div
               key={alert.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.03 }}
-              className={`flex items-start gap-3 p-3 rounded-xl border ${
-                alert.type === 'critical' ? 'bg-red-500/5 border-red-500/15' :
-                alert.type === 'warning' ? 'bg-amber-500/5 border-amber-500/15' :
-                'bg-blue-500/5 border-blue-500/15'
-              }`}
+              transition={{ delay: i * 0.04 }}
+              className={`p-3 rounded-xl border ${sev.border} ${sev.bg} hover:bg-white/[0.04] transition-colors`}
             >
-              {alert.type === 'critical' ? <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" /> :
-               alert.type === 'warning' ? <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" /> :
-               <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-slate-300">{alert.message}</p>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  {new Date(alert.time).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </p>
+              <div className="flex items-start gap-3">
+                <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${sev.color}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white">{alert.title}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{alert.description}</p>
+                  <p className="text-[10px] text-slate-600 mt-1">
+                    {alert.timestamp.toLocaleDateString('pt-BR')} {alert.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
               </div>
             </motion.div>
-          ))
+          )
+        })}
+        {alerts.length === 0 && (
+          <div className="text-center py-8">
+            <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+            <p className="text-sm text-slate-500">Nenhum alerta no momento</p>
+          </div>
         )}
       </div>
     </motion.div>
-  )
-}
-
-function CheckCircle({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
   )
 }

@@ -1,105 +1,100 @@
 'use client'
 
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { MapPin, Users, Building2, Globe } from 'lucide-react'
+import { MapPin, Building2, TrendingUp } from 'lucide-react'
 import type { CommandCenterData } from './command-center'
 
-interface BrazilMapProps {
-  data: CommandCenterData
+interface StateData {
+  uf: string
+  name: string
+  x: number
+  y: number
+  companies: number
+  percentage: number
 }
 
-const regions = [
-  { name: 'MT - Mato Grosso', x: 38, y: 35, color: '#10b981', companies: '~5%' },
-  { name: 'GO - Goiás', x: 48, y: 42, color: '#f59e0b', companies: '~8%' },
-  { name: 'SP - São Paulo', x: 52, y: 58, color: '#3b82f6', companies: '~45%' },
-  { name: 'PR - Paraná', x: 48, y: 68, color: '#8b5cf6', companies: '~22%' },
-  { name: 'MG - Minas Gerais', x: 58, y: 50, color: '#06b6d4', companies: '~20%' },
-]
+const TARGET_STATES = ['MT', 'GO', 'SP', 'PR', 'MG']
+const STATE_NAMES: Record<string, string> = {
+  MT: 'Mato Grosso', GO: 'Goiás', SP: 'São Paulo',
+  PR: 'Paraná', MG: 'Minas Gerais',
+}
 
-export function BrazilMapSection({ data }: BrazilMapProps) {
-  const activeCompanies = data.companies.filter(c => c.active && !c.blocked).length
-  const statesWithCompanies = new Set(data.companies.filter(c => c.state).map(c => c.state)).size
+const STATE_COORDS: Record<string, { x: number; y: number }> = {
+  MT: { x: 200, y: 140 }, GO: { x: 340, y: 160 }, SP: { x: 380, y: 260 },
+  PR: { x: 350, y: 280 }, MG: { x: 420, y: 200 },
+}
+
+export function BrazilMapSection({ data }: { data: CommandCenterData }) {
+  const stateStats = useMemo(() => {
+    const totalActive = data.companies.filter(c => c.active && !c.blocked).length || 1
+    return TARGET_STATES.map(uf => ({
+      uf,
+      name: STATE_NAMES[uf],
+      ...STATE_COORDS[uf],
+      companies: data.companies.filter(c => c.state === uf && c.active && !c.blocked).length,
+      percentage: Math.round((data.companies.filter(c => c.state === uf && c.active && !c.blocked).length / totalActive) * 100),
+    }))
+  }, [data.companies])
+
+  const totalTarget = stateStats.reduce((a, s) => a + s.companies, 0)
+  const totalAll = data.companies.length
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.25, duration: 0.5 }}
-      className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/90 to-slate-900/50 p-6 space-y-4"
+      transition={{ duration: 0.5 }}
+      className="rounded-2xl border border-white/5 bg-slate-900/50 backdrop-blur-xl p-6"
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-green-600/20 to-green-600/5 border border-green-500/20 flex items-center justify-center">
-            <Globe className="w-5 h-5 text-green-400" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-white">Mapa do Brasil</h2>
-            <p className="text-xs text-slate-500">Estados-alvo (MT, GO, SP, PR, MG)</p>
-          </div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-cyan-400" />
+            Presença Geográfica
+          </h3>
+          <p className="text-sm text-slate-500">Estados-alvo: MT, GO, SP, PR, MG</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <Building2 className="w-3.5 h-3.5" />
-            {activeCompanies} ativas
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-500">
-            <MapPin className="w-3.5 h-3.5" />
-            {statesWithCompanies} estados
-          </div>
+        <div className="text-right">
+          <p className="text-2xl font-bold text-white">{totalTarget}<span className="text-sm text-slate-500">/{totalAll}</span></p>
+          <p className="text-[10px] text-slate-600">Empresas nos estados-alvo</p>
         </div>
       </div>
 
-      <div className="relative bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.03),transparent_60%)] rounded-xl h-64 overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-64 h-72">
-            {regions.map((r, i) => (
-              <motion.div
-                key={r.name}
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5 + i * 0.15, type: 'spring' }}
-                className="absolute group"
-                style={{ left: `${r.x}%`, top: `${r.y}%` }}
-              >
-                <div className="relative">
-                  <div className="absolute -inset-3 rounded-full bg-gradient-to-r blur-xl opacity-40 group-hover:opacity-70 transition-opacity"
-                    style={{ backgroundColor: r.color }} />
-                  <div className="relative w-4 h-4 rounded-full border-2 border-white/30 shadow-lg cursor-pointer"
-                    style={{ backgroundColor: r.color }}>
-                  </div>
-                </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap">
-                  <div className="bg-slate-900/95 border border-white/10 rounded-lg px-2.5 py-1.5 shadow-2xl backdrop-blur-md">
-                    <p className="text-xs font-medium text-white">{r.name}</p>
-                    <p className="text-xs text-slate-500">{r.companies} empresas</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-
-            {regions.map((r, i) =>
-              regions.slice(i + 1).map((r2, j) => (
-                <svg key={`${i}-${j}`} className="absolute inset-0 w-full h-full pointer-events-none">
-                  <line
-                    x1={`${(r.x / 100) * 256}`} y1={`${(r.y / 100) * 288}`}
-                    x2={`${(r2.x / 100) * 256}`} y2={`${(r2.y / 100) * 288}`}
-                    stroke={r.color} strokeWidth="0.5" opacity="0.15"
-                    strokeDasharray="3 3"
-                  />
-                </svg>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="absolute bottom-3 left-3 right-3 flex justify-center gap-4">
-          {regions.map(r => (
-            <div key={`leg-${r.name}`} className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
-              <span className="text-[10px] text-slate-600">{r.name}</span>
-            </div>
+      <div className="relative bg-slate-800/30 rounded-xl p-4 overflow-hidden">
+        <svg viewBox="0 0 600 400" className="w-full h-64">
+          <defs>
+            <radialGradient id="dotGlow">
+              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          {/* Simplified Brazil outline */}
+          <path
+            d="M120,80 L180,60 L250,70 L320,60 L380,80 L420,100 L460,90 L500,120 L520,160 L510,200 L490,240 L470,280 L440,310 L400,340 L350,350 L300,340 L250,330 L200,310 L160,280 L130,240 L110,200 L100,160 L110,120 Z"
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth="2"
+          />
+          {stateStats.map((s, i) => (
+            <g key={s.uf}>
+              <circle cx={s.x} cy={s.y} r={20 + s.companies * 3} fill="url(#dotGlow)" opacity={0.5} />
+              <circle cx={s.x} cy={s.y} r={6 + Math.min(s.companies * 1.5, 10)} fill="#06b6d4" opacity={0.8} className="drop-shadow-lg" />
+              <text x={s.x} y={s.y - 18} textAnchor="middle" fill="white" fontSize="11" fontWeight="600">{s.uf}</text>
+              <text x={s.x} y={s.y + 24} textAnchor="middle" fill="#94a3b8" fontSize="9">{s.companies} empresas</text>
+            </g>
           ))}
-        </div>
+        </svg>
+      </div>
+
+      <div className="grid grid-cols-5 gap-2 mt-4">
+        {stateStats.map(s => (
+          <div key={s.uf} className="text-center p-2 rounded-lg bg-white/[0.03] border border-white/5">
+            <p className="text-xs font-bold text-cyan-400">{s.uf}</p>
+            <p className="text-lg font-bold text-white">{s.companies}</p>
+            <p className="text-[10px] text-slate-600">{s.percentage}%</p>
+          </div>
+        ))}
       </div>
     </motion.div>
   )

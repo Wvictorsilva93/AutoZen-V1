@@ -1,130 +1,149 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ScrollText, UserPlus, LogIn, Settings, AlertTriangle, Shield, Edit, Trash2, Ban, CheckCircle2, Monitor, Globe } from 'lucide-react'
+import {
+  History, User, Building2, Shield, Settings, CreditCard,
+  Trash2, Edit3, Eye, LogIn, Filter
+} from 'lucide-react'
 import type { CommandCenterData } from './command-center'
 
 const actionIcons: Record<string, any> = {
-  create_company: UserPlus, update_company: Edit, delete_company: Trash2,
-  block_company: Ban, unblock_company: CheckCircle2,
-  login: LogIn, update_settings: Settings, security_alert: Shield,
+  login: LogIn, create: Edit3, update: Settings, delete: Trash2,
+  view: Eye, payment: CreditCard, block: Shield, default: User,
 }
 
 const actionColors: Record<string, string> = {
-  create_company: 'text-emerald-400 bg-emerald-500/10',
-  update_company: 'text-blue-400 bg-blue-500/10',
-  delete_company: 'text-red-400 bg-red-500/10',
-  block_company: 'text-red-400 bg-red-500/10',
-  unblock_company: 'text-emerald-400 bg-emerald-500/10',
-  login: 'text-cyan-400 bg-cyan-500/10',
-  update_settings: 'text-violet-400 bg-violet-500/10',
-  security_alert: 'text-amber-400 bg-amber-500/10',
+  login: 'text-blue-400 bg-blue-500/10',
+  create: 'text-emerald-400 bg-emerald-500/10',
+  update: 'text-amber-400 bg-amber-500/10',
+  delete: 'text-red-400 bg-red-500/10',
+  view: 'text-slate-400 bg-slate-500/10',
+  payment: 'text-violet-400 bg-violet-500/10',
+  block: 'text-red-400 bg-red-500/10',
+  default: 'text-cyan-400 bg-cyan-500/10',
 }
 
-function parseBrowser(ua: string | null) {
-  if (!ua) return null
-  if (ua.includes('Chrome') && !ua.includes('Edg')) return 'Chrome'
-  if (ua.includes('Firefox')) return 'Firefox'
-  if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari'
-  if (ua.includes('Edg')) return 'Edge'
-  if (ua.includes('MSIE') || ua.includes('Trident')) return 'IE'
-  return null
+function getActionType(action: string): string {
+  const a = action.toLowerCase()
+  if (a.includes('login') || a.includes('sign')) return 'login'
+  if (a.includes('creat') || a.includes('nov') || a.includes('added')) return 'create'
+  if (a.includes('updat') || a.includes('edit') || a.includes('alter')) return 'update'
+  if (a.includes('delet') || a.includes('remov') || a.includes('exclu')) return 'delete'
+  if (a.includes('view') || a.includes('visuali')) return 'view'
+  if (a.includes('pay') || a.includes('pag') || a.includes('cobr')) return 'payment'
+  if (a.includes('block') || a.includes('suspend')) return 'block'
+  return 'default'
 }
 
 export function GlobalAudit({ data }: { data: CommandCenterData }) {
-  const logs = useMemo(() =>
-    data.auditLogs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 20),
-  [data])
+  const [filterAction, setFilterAction] = useState('all')
+
+  const logs = useMemo(() => {
+    let items = data.auditLogs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    if (filterAction !== 'all') {
+      items = items.filter(l => getActionType(l.action) === filterAction)
+    }
+    return items.slice(0, 30)
+  }, [data.auditLogs, filterAction])
+
+  const groupedByDay = useMemo(() => {
+    const groups: Record<string, typeof logs> = {}
+    logs.forEach(log => {
+      const day = new Date(log.created_at).toLocaleDateString('pt-BR')
+      if (!groups[day]) groups[day] = []
+      groups[day].push(log)
+    })
+    return groups
+  }, [logs])
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.55, duration: 0.5 }}
-      className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/90 to-slate-900/50 p-6 space-y-4"
+      transition={{ duration: 0.5 }}
+      className="rounded-2xl border border-white/5 bg-slate-900/50 backdrop-blur-xl p-6"
     >
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600/20 to-blue-600/5 border border-blue-500/20 flex items-center justify-center">
-          <ScrollText className="w-5 h-5 text-blue-400" />
-        </div>
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-lg font-bold text-white">Auditoria Global</h2>
-          <p className="text-xs text-slate-500">{data.auditLogs.length} eventos registrados</p>
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <History className="w-5 h-5 text-cyan-400" />
+            Auditoria Global
+          </h3>
+          <p className="text-sm text-slate-500">{data.auditLogs.length} registros no sistema</p>
+        </div>
+        <div className="flex items-center gap-1 bg-white/[0.03] rounded-xl p-1 border border-white/5">
+          {['all', 'login', 'create', 'update', 'delete'].map(action => (
+            <button
+              key={action}
+              onClick={() => setFilterAction(action)}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                filterAction === action
+                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/20'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              {action === 'all' ? 'Todos' : action.charAt(0).toUpperCase() + action.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="relative">
-        <div className="absolute left-4 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/20 via-blue-500/5 to-transparent" />
-
-        <div className="space-y-1 max-h-96 overflow-y-auto pr-1 scrollbar-thin">
-          {logs.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-sm text-slate-600">Nenhum evento de auditoria</p>
+      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 scrollbar-thin">
+        {Object.entries(groupedByDay).map(([day, dayLogs]) => (
+          <div key={day}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-px flex-1 bg-white/5" />
+              <span className="text-[10px] text-slate-600 uppercase tracking-wider shrink-0">{day}</span>
+              <div className="h-px flex-1 bg-white/5" />
             </div>
-          ) : (
-            logs.map((log, i) => {
-              const Icon = actionIcons[log.action] || Shield
-              const color = actionColors[log.action] || 'text-slate-400 bg-slate-500/10'
-              const browser = parseBrowser(log.user_agent)
-              return (
-                <motion.div
-                  key={log.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.02 }}
-                  className="flex items-start gap-4 py-2.5 group"
-                >
-                  <div className={`relative z-10 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-300">
-                      <span className="font-medium text-white">{log.user_name}</span>
-                      {' '}{formatAction(log.action)}{' '}
-                      {log.target && <span className="text-blue-400">{log.target}</span>}
-                    </p>
-                    <div className="flex items-center gap-3 mt-1 flex-wrap">
-                      <p className="text-xs text-slate-600">
-                        {new Date(log.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      {log.ip && (
-                        <div className="flex items-center gap-1 text-xs text-slate-600" title={log.ip}>
-                          <Globe className="w-3 h-3" />
-                          {log.ip}
-                        </div>
-                      )}
-                      {browser && (
-                        <div className="flex items-center gap-1 text-xs text-slate-600">
-                          <Monitor className="w-3 h-3" />
-                          {browser}
-                        </div>
-                      )}
-                      {log.company_name && (
-                        <span className="text-xs text-slate-600">· {log.company_name}</span>
-                      )}
+            <div className="space-y-1.5">
+              {dayLogs.map((log, i) => {
+                const actionType = getActionType(log.action)
+                const Icon = actionIcons[actionType] || actionIcons.default
+                const colorClass = actionColors[actionType] || actionColors.default
+                return (
+                  <motion.div
+                    key={log.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                  >
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}>
+                      <Icon className="w-3.5 h-3.5" />
                     </div>
-                  </div>
-                </motion.div>
-              )
-            })
-          )}
-        </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-white">
+                        <span className="font-medium">{log.user_name}</span>
+                        {' · '}
+                        <span className="text-slate-400">{log.action}</span>
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {log.company_name && (
+                          <span className="text-[10px] text-slate-600 flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />{log.company_name}
+                          </span>
+                        )}
+                        {log.ip && <span className="text-[10px] text-slate-600">{log.ip}</span>}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-slate-600 shrink-0">
+                      {new Date(log.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+        {logs.length === 0 && (
+          <div className="text-center py-8">
+            <History className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+            <p className="text-sm text-slate-500">Nenhum registro encontrado</p>
+          </div>
+        )}
       </div>
     </motion.div>
   )
-}
-
-function formatAction(action: string): string {
-  const map: Record<string, string> = {
-    create_company: 'criou a empresa',
-    update_company: 'atualizou',
-    delete_company: 'excluiu',
-    block_company: 'bloqueou',
-    unblock_company: 'desbloqueou',
-    login: 'fez login em',
-    update_settings: 'alterou configurações de',
-    security_alert: 'gerou alerta de segurança em',
-  }
-  return map[action] || action
 }
