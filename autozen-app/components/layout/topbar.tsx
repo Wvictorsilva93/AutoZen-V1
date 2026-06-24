@@ -40,7 +40,7 @@ export function TopBar() {
           src="/logo-autozen.png"
           alt="AutoZen"
           onError={(e) => { e.currentTarget.src = '/logo.svg'; }}
-          className="h-9 w-auto object-contain ml-10 lg:hidden"
+          className="h-10 w-auto object-contain ml-10 lg:hidden"
         />
         <div className="hidden lg:block">
           <h2 className="text-sm font-semibold text-foreground">

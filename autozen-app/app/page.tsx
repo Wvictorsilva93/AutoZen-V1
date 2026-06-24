@@ -133,7 +133,7 @@ export default function LoginPage() {
             <img
               src="/logo-autozen.png"
               alt="AutoZen"
-              className="w-48 h-auto mb-6"
+              className="w-64 h-auto mb-6"
             />
             <h1 className="text-lg font-semibold text-white tracking-tight">
               {isLogin ? 'Acessar plataforma' : 'Criar conta'}
