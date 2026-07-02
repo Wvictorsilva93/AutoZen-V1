@@ -182,14 +182,21 @@ export default function AgendamentoPage() {
             <div className="space-y-2">
               <Label className="text-slate-300">Cliente</Label>
               <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v ?? '' })}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue placeholder="Selecione">{clients.find(c => c.id === form.client_id)?.name}</SelectValue></SelectTrigger>
                 <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-slate-300">Veículo</Label>
               <Select value={form.vehicle_id} onValueChange={(v) => setForm({ ...form, vehicle_id: v ?? '' })}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
+                  <SelectValue placeholder="Selecione">
+                    {(() => {
+                      const v = vehicles.find(v => v.id === form.vehicle_id);
+                      return v ? [v.brand, v.model, v.plate].filter(Boolean).join(' ') : null;
+                    })()}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>{vehicles.map((v) => <SelectItem key={v.id} value={v.id}>{[v.brand, v.model, v.plate].filter(Boolean).join(' ')}</SelectItem>)}</SelectContent>
               </Select>
             </div>

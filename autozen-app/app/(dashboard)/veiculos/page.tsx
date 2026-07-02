@@ -191,7 +191,7 @@ export default function VeiculosPage() {
             <div className="space-y-2">
               <Label className="text-slate-300">Cliente</Label>
               <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v ?? '' })}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue placeholder="Selecione o cliente">{clients.find(c => c.id === form.client_id)?.name}</SelectValue></SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
