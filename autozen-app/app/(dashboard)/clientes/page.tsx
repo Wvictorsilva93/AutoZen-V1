@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Search, Phone, Mail, MessageSquare, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Search, Phone, Mail, MessageSquare, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,10 @@ import {
 import { listRows, insertRow, updateRow, deleteRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
 import { maskPhone } from '@/lib/masks';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
+import { LoadingState } from '@/components/ui/loading-state';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Client {
   id: string;
@@ -58,9 +62,14 @@ export default function ClientesPage() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setPage(1); }, [search]);
 
-  const filtered = clients.filter((c) =>
-    c.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = clients.filter((c) => {
+    const q = search.toLowerCase();
+    return (
+      c.name?.toLowerCase().includes(q) ||
+      c.phone?.toLowerCase().includes(q) ||
+      c.email?.toLowerCase().includes(q)
+    );
+  });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -109,53 +118,59 @@ export default function ClientesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-white">Clientes</h1>
-        <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Cliente
-        </Button>
-      </div>
+    <div className="space-y-6 animate-fade-in-up">
+      <PageHeader
+        title="Clientes"
+        subtitle={`${filtered.length} cliente${filtered.length !== 1 ? 's' : ''} encontrado${filtered.length !== 1 ? 's' : ''}`}
+        action={
+          <Button onClick={openCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Cliente
+          </Button>
+        }
+      />
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar cliente..."
+          placeholder="Buscar por nome, telefone ou email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-slate-800/50 border-slate-700 text-white"
+          className="pl-10 bg-input/50 border-border text-foreground"
         />
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-slate-500">
-          <Loader2 className="w-6 h-6 animate-spin" />
-        </div>
+        <LoadingState text="Carregando clientes..." />
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-slate-500">
-          <p>Nenhum cliente encontrado.</p>
-          <p className="text-xs text-slate-600 mt-1">Clique em &quot;Novo Cliente&quot; para começar.</p>
-        </div>
+        <EmptyState
+          title="Nenhum cliente encontrado"
+          description={search ? 'Tente outro termo de busca.' : 'Clique em "Novo Cliente" para começar.'}
+          action={!search ? (
+            <Button onClick={openCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-2" /> Novo Cliente
+            </Button>
+          ) : undefined}
+        />
       ) : (
         <div className="grid gap-4">
           {pageItems.map((cliente) => (
-            <Card key={cliente.id} className="bg-card border-border hover:border-blue-500/30 transition-colors">
+            <Card key={cliente.id} className="bg-card border-border hover:border-primary/30 transition-colors">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base text-white">{cliente.name}</CardTitle>
+                  <CardTitle className="text-base text-foreground">{cliente.name}</CardTitle>
                   <div className="flex items-center gap-2">
                     {cliente.is_recurrent && (
-                      <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
                         recorrente
                       </Badge>
                     )}
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-400"
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-primary"
                       onClick={() => openEdit(cliente)} aria-label="Editar">
                       <Pencil className="w-4 h-4" />
                     </Button>
                     {isAdmin && (
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-red-400"
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive"
                         onClick={() => setDeleteTarget(cliente)} aria-label="Excluir">
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -164,7 +179,7 @@ export default function ClientesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                   {cliente.phone && (
                     <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {cliente.phone}</span>
                   )}
@@ -173,15 +188,15 @@ export default function ClientesPage() {
                   )}
                   <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {cliente.total_visits ?? 0} visitas</span>
                 </div>
-                {cliente.notes && <p className="text-xs text-slate-500 mt-2">{cliente.notes}</p>}
+                {cliente.notes && <p className="text-xs text-muted-foreground/60 mt-2">{cliente.notes}</p>}
               </CardContent>
             </Card>
           ))}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-2">
-              <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="text-slate-300">Anterior</Button>
-              <span className="text-xs text-slate-400">Página {page} de {totalPages}</span>
-              <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="text-slate-300">Próxima</Button>
+              <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="text-muted-foreground">Anterior</Button>
+              <span className="text-xs text-muted-foreground">Página {page} de {totalPages}</span>
+              <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="text-muted-foreground">Próxima</Button>
             </div>
           )}
         </div>
@@ -191,55 +206,46 @@ export default function ClientesPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-white">{editing ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
+            <DialogTitle className="text-foreground">{editing ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-300">Nome *</Label>
+              <Label className="text-muted-foreground">Nome *</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="bg-slate-800/50 border-slate-700 text-white" required />
+                className="bg-input/50 border-border text-foreground" required />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-300">Telefone / WhatsApp</Label>
+              <Label className="text-muted-foreground">Telefone / WhatsApp</Label>
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: maskPhone(e.target.value) })}
-                className="bg-slate-800/50 border-slate-700 text-white" />
+                className="bg-input/50 border-border text-foreground" placeholder="(00) 00000-0000" />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-300">Email</Label>
+              <Label className="text-muted-foreground">Email</Label>
               <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="bg-slate-800/50 border-slate-700 text-white" />
+                className="bg-input/50 border-border text-foreground" />
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-300">Observações</Label>
+              <Label className="text-muted-foreground">Observações</Label>
               <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                className="bg-slate-800/50 border-slate-700 text-white" />
+                className="bg-input/50 border-border text-foreground" />
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-500 text-white">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+              <Button type="submit" disabled={saving} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                {saving ? <span className="animate-spin">⏳</span> : 'Salvar'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Confirmar exclusão */}
-      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-white">Excluir cliente</DialogTitle>
-          </DialogHeader>
-          <p className="text-slate-400 text-sm">
-            Tem certeza que deseja excluir <span className="text-white font-medium">{deleteTarget?.name}</span>? Esta ação não pode ser desfeita.
-          </p>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="text-slate-300">Cancelar</Button>
-            <Button onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-500 text-white">
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excluir'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="Excluir cliente"
+        description={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Esta ação não pode ser desfeita.`}
+        loading={deleting}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

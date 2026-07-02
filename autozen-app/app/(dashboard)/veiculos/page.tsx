@@ -3,22 +3,22 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Search, Car, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Search, Car, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { listRows, insertRow, updateRow, deleteRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
 import { maskPlate } from '@/lib/masks';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
+import { LoadingState } from '@/components/ui/loading-state';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Vehicle {
   id: string;
@@ -35,6 +35,7 @@ interface ClientOption { id: string; name: string }
 
 const TABLE = 'vehicles';
 const emptyForm = { plate: '', brand: '', model: '', color: '', type: 'carro', client_id: '' };
+const typeLabel: Record<string, string> = { carro: 'Carro', moto: 'Moto', caminhão: 'Caminhão', van: 'Van' };
 
 export default function VeiculosPage() {
   const { profile, isAdmin } = useProfile();
@@ -66,7 +67,7 @@ export default function VeiculosPage() {
 
   const clientName = (id: string | null) => clients.find((c) => c.id === id)?.name ?? '—';
   const filtered = items.filter((v) =>
-    [v.plate, v.model, v.brand].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
+    [v.plate, v.model, v.brand, v.color].some((f) => f?.toLowerCase().includes(search.toLowerCase()))
   );
 
   function openCreate() { setEditing(null); setForm(emptyForm); setDialogOpen(true); }
@@ -107,47 +108,58 @@ export default function VeiculosPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-white">Veículos</h1>
-        <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
-          <Plus className="w-4 h-4 mr-2" /> Novo Veículo
-        </Button>
-      </div>
+    <div className="space-y-6 animate-fade-in-up">
+      <PageHeader
+        title="Veículos"
+        subtitle={`${filtered.length} veículo${filtered.length !== 1 ? 's' : ''} cadastrado${filtered.length !== 1 ? 's' : ''}`}
+        action={
+          <Button onClick={openCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Plus className="w-4 h-4 mr-2" /> Novo Veículo
+          </Button>
+        }
+      />
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-        <Input placeholder="Buscar por placa, modelo ou marca..." value={search}
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input placeholder="Buscar por placa, modelo, marca ou cor..." value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-slate-800/50 border-slate-700 text-white" />
+          className="pl-10 bg-input/50 border-border text-foreground" />
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="w-6 h-6 animate-spin" /></div>
+        <LoadingState text="Carregando veículos..." />
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-slate-500"><p>Nenhum veículo encontrado.</p></div>
+        <EmptyState
+          title="Nenhum veículo encontrado"
+          description={search ? 'Tente outro termo de busca.' : 'Clique em "Novo Veículo" para cadastrar.'}
+          action={!search ? (
+            <Button onClick={openCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-2" /> Novo Veículo
+            </Button>
+          ) : undefined}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((vehicle) => (
-            <Card key={vehicle.id} className="bg-card border-border hover:border-blue-500/30 transition-colors">
+            <Card key={vehicle.id} className="bg-card border-border hover:border-primary/30 transition-colors">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base text-white flex items-center gap-2">
-                    <Car className="w-4 h-4 text-blue-400" /> {vehicle.plate}
+                  <CardTitle className="text-base text-foreground flex items-center gap-2">
+                    <Car className="w-4 h-4 text-primary" /> {vehicle.plate}
                   </CardTitle>
                   <div className="flex items-center gap-1">
-                    <Badge variant="secondary" className="bg-slate-700 text-slate-300 capitalize">{vehicle.type}</Badge>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-400" onClick={() => openEdit(vehicle)} aria-label="Editar"><Pencil className="w-4 h-4" /></Button>
+                    <Badge variant="secondary" className="bg-muted text-muted-foreground capitalize">{typeLabel[vehicle.type] ?? vehicle.type}</Badge>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(vehicle)} aria-label="Editar"><Pencil className="w-4 h-4" /></Button>
                     {isAdmin && (
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-red-400" onClick={() => setDeleteTarget(vehicle)} aria-label="Excluir"><Trash2 className="w-4 h-4" /></Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(vehicle)} aria-label="Excluir"><Trash2 className="w-4 h-4" /></Button>
                     )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-white font-medium">{vehicle.brand} {vehicle.model}</p>
-                <p className="text-xs text-slate-400 mt-1">Cor: {vehicle.color || '—'}</p>
-                <p className="text-xs text-slate-500 mt-1">Dono: {clientName(vehicle.client_id)}</p>
+                <p className="text-sm text-foreground font-medium">{vehicle.brand} {vehicle.model}</p>
+                <p className="text-xs text-muted-foreground mt-1">Cor: {vehicle.color || '—'}</p>
+                <p className="text-xs text-muted-foreground mt-1">Cliente: {clientName(vehicle.client_id)}</p>
               </CardContent>
             </Card>
           ))}
@@ -156,68 +168,66 @@ export default function VeiculosPage() {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="bg-card border-border">
-          <DialogHeader><DialogTitle className="text-white">{editing ? 'Editar Veículo' : 'Novo Veículo'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-foreground">{editing ? 'Editar Veículo' : 'Novo Veículo'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-300">Placa *</Label>
-              <Input value={form.plate} onChange={(e) => setForm({ ...form, plate: maskPlate(e.target.value) })} className="bg-slate-800/50 border-slate-700 text-white" required />
+              <Label className="text-muted-foreground">Placa *</Label>
+              <Input value={form.plate} onChange={(e) => setForm({ ...form, plate: maskPlate(e.target.value) })} className="bg-input/50 border-border text-foreground" required />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-slate-300">Marca</Label>
-                <Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Label className="text-muted-foreground">Marca</Label>
+                <Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="bg-input/50 border-border text-foreground" />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Modelo</Label>
-                <Input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Label className="text-muted-foreground">Modelo</Label>
+                <Input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} className="bg-input/50 border-border text-foreground" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-slate-300">Cor</Label>
-                <Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Label className="text-muted-foreground">Cor</Label>
+                <Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="bg-input/50 border-border text-foreground" />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Tipo</Label>
+                <Label className="text-muted-foreground">Tipo</Label>
                 <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v ?? '' })}>
-                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-input/50 border-border text-foreground"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="carro">Carro</SelectItem>
                     <SelectItem value="moto">Moto</SelectItem>
+                    <SelectItem value="caminhão">Caminhão</SelectItem>
+                    <SelectItem value="van">Van</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-slate-300">Cliente</Label>
+              <Label className="text-muted-foreground">Cliente</Label>
               <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v ?? '' })}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white"><SelectValue placeholder="Selecione o cliente">{clients.find(c => c.id === form.client_id)?.name}</SelectValue></SelectTrigger>
+                <SelectTrigger className="bg-input/50 border-border text-foreground"><SelectValue placeholder="Selecione o cliente">{clients.find(c => c.id === form.client_id)?.name}</SelectValue></SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-500 text-white">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+              <Button type="submit" disabled={saving} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                {saving ? <span className="animate-spin">⏳</span> : 'Salvar'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader><DialogTitle className="text-white">Excluir veículo</DialogTitle></DialogHeader>
-          <p className="text-slate-400 text-sm">Excluir o veículo <span className="text-white font-medium">{deleteTarget?.plate}</span>?</p>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="text-slate-300">Cancelar</Button>
-            <Button onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-500 text-white">
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excluir'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="Excluir veículo"
+        description={`Excluir o veículo ${deleteTarget?.plate}?`}
+        loading={deleting}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

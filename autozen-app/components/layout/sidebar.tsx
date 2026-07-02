@@ -23,10 +23,19 @@ import {
 import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
 
-const navigation = [
+type NavItem = {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children?: { name: string; href: string; icon: React.ComponentType<{ className?: string }> }[];
+};
+
+const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Clientes', href: '/clientes', icon: Users },
-  { name: 'Ranking', href: '/clientes/ranking', icon: Trophy },
+  {
+    name: 'Clientes', href: '/clientes', icon: Users,
+    children: [{ name: 'Ranking', href: '/clientes/ranking', icon: Trophy }],
+  },
   { name: 'Veículos', href: '/veiculos', icon: Car },
   { name: 'Serviços', href: '/servicos', icon: Wrench },
   { name: 'Agendamento', href: '/agendamento', icon: Calendar },
@@ -92,21 +101,42 @@ export function Sidebar() {
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
           {navigation.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const hasChildren = 'children' in item && item.children && item.children.length > 0;
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative',
-                  isActive
-                    ? 'text-primary bg-primary/10 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-5 before:rounded-r-full before:bg-primary'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent'
-                )}
-              >
-                <item.icon className={cn('w-5 h-5 flex-shrink-0', isActive && 'text-primary')} />
-                <span>{item.name}</span>
-              </Link>
+              <div key={item.name}>
+                <Link
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative',
+                    isActive
+                      ? 'text-primary bg-primary/10 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-5 before:rounded-r-full before:bg-primary'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent'
+                  )}
+                >
+                  <item.icon className={cn('w-5 h-5 flex-shrink-0', isActive && 'text-primary')} />
+                  <span>{item.name}</span>
+                </Link>
+                {hasChildren && 'children' in item && item.children?.map((child) => {
+                  const childActive = pathname === child.href || pathname.startsWith(child.href + '/');
+                  return (
+                    <Link
+                      key={child.name}
+                      href={child.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 pl-10 pr-3 py-2 rounded-lg text-sm transition-all duration-200',
+                        childActive
+                          ? 'text-primary bg-primary/5'
+                          : 'text-muted-foreground/60 hover:text-muted-foreground hover:bg-sidebar-accent'
+                      )}
+                    >
+                      <child.icon className={cn('w-4 h-4 flex-shrink-0', childActive && 'text-primary')} />
+                      <span>{child.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             );
           })}
 

@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Search, Package, AlertTriangle, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Search, Package, AlertTriangle, Pencil, Trash2, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,10 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { listRows, insertRow, updateRow, deleteRow } from '@/lib/db';
 import { useProfile } from '@/hooks/useProfile';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
+import { LoadingState } from '@/components/ui/loading-state';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface Product {
   id: string; company_id: string; name: string; category: string | null;
@@ -44,6 +48,8 @@ export default function EstoquePage() {
   useEffect(() => { load(); }, [load]);
 
   const filtered = items.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()));
+  const totalValue = filtered.reduce((a, p) => a + (Number(p.quantity) || 0) * (Number(p.unit_price) || 0), 0);
+  const lowStockCount = filtered.filter((p) => p.quantity <= p.min_quantity).length;
 
   function openCreate() { setEditing(null); setForm(emptyForm); setDialogOpen(true); }
   function openEdit(p: Product) {
@@ -84,51 +90,93 @@ export default function EstoquePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-white">Estoque</h1>
-        <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-500 text-white">
-          <Plus className="w-4 h-4 mr-2" /> Novo Produto
-        </Button>
+    <div className="space-y-6 animate-fade-in-up">
+      <PageHeader
+        title="Estoque"
+        subtitle={`${filtered.length} produto${filtered.length !== 1 ? 's' : ''} cadastrado${filtered.length !== 1 ? 's' : ''}`}
+        action={
+          <Button onClick={openCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Plus className="w-4 h-4 mr-2" /> Novo Produto
+          </Button>
+        }
+      />
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Valor Total em Estoque</CardTitle>
+            <DollarSign className="w-4 h-4 text-emerald-400" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-emerald-400">R$ {totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Produtos Cadastrados</CardTitle>
+            <Package className="w-4 h-4 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-foreground">{filtered.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">Estoque Baixo</CardTitle>
+            <AlertTriangle className="w-4 h-4 text-amber-400" />
+          </CardHeader>
+          <CardContent>
+            <p className={`text-2xl font-bold ${lowStockCount > 0 ? 'text-amber-400' : 'text-muted-foreground'}`}>{lowStockCount}</p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input placeholder="Buscar produto..." value={search} onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-slate-800/50 border-slate-700 text-white" />
+          className="pl-10 bg-input/50 border-border text-foreground" />
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="w-6 h-6 animate-spin" /></div>
+        <LoadingState text="Carregando estoque..." />
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-slate-500"><p>Nenhum produto no estoque.</p></div>
+        <EmptyState
+          title="Nenhum produto no estoque"
+          description={search ? 'Tente outro termo de busca.' : 'Clique em "Novo Produto" para cadastrar.'}
+          action={!search ? (
+            <Button onClick={openCreate} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="w-4 h-4 mr-2" /> Novo Produto
+            </Button>
+          ) : undefined}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => {
             const lowStock = item.quantity <= item.min_quantity;
             return (
-              <Card key={item.id} className={`bg-card border-border hover:border-blue-500/30 transition-colors ${lowStock ? 'border-amber-500/30' : ''}`}>
+              <Card key={item.id} className={`bg-card border-border hover:border-primary/30 transition-colors ${lowStock ? 'border-amber-500/30' : ''}`}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base text-white flex items-center gap-2">
-                      <Package className="w-4 h-4 text-blue-400" /> {item.name}
+                    <CardTitle className="text-base text-foreground flex items-center gap-2">
+                      <Package className="w-4 h-4 text-primary" /> {item.name}
                     </CardTitle>
                     <div className="flex items-center gap-1">
                       {lowStock && <AlertTriangle className="w-4 h-4 text-amber-400" />}
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-400" onClick={() => openEdit(item)} aria-label="Editar"><Pencil className="w-4 h-4" /></Button>
-                      {isAdmin && <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-red-400" onClick={() => setDeleteTarget(item)} aria-label="Excluir"><Trash2 className="w-4 h-4" /></Button>}
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(item)} aria-label="Editar"><Pencil className="w-4 h-4" /></Button>
+                      {isAdmin && <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(item)} aria-label="Excluir"><Trash2 className="w-4 h-4" /></Button>}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={`text-xl font-bold ${lowStock ? 'text-amber-400' : 'text-white'}`}>{item.quantity} {item.unit}</p>
-                      <p className="text-xs text-slate-500">Mín: {item.min_quantity} {item.unit}</p>
+                      <p className={`text-xl font-bold ${lowStock ? 'text-amber-400' : 'text-foreground'}`}>{item.quantity} {item.unit}</p>
+                      <p className="text-xs text-muted-foreground">Mín: {item.min_quantity} {item.unit}</p>
                     </div>
-                    {item.category && <Badge variant="secondary" className="bg-slate-700 text-slate-300">{item.category}</Badge>}
+                    {item.category && <Badge variant="secondary" className="bg-muted text-muted-foreground">{item.category}</Badge>}
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">Custo: R$ {Number(item.unit_price ?? 0).toFixed(2)}/{item.unit}</p>
+                  <p className="text-xs text-muted-foreground mt-2">Custo: R$ {Number(item.unit_price ?? 0).toFixed(2)}/{item.unit}</p>
                 </CardContent>
               </Card>
             );
@@ -138,57 +186,53 @@ export default function EstoquePage() {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="bg-card border-border">
-          <DialogHeader><DialogTitle className="text-white">{editing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="text-foreground">{editing ? 'Editar Produto' : 'Novo Produto'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-300">Nome *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" required />
+              <Label className="text-muted-foreground">Nome *</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-input/50 border-border text-foreground" required />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
-                <Label className="text-slate-300">Qtd</Label>
-                <Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Label className="text-muted-foreground">Qtd</Label>
+                <Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} className="bg-input/50 border-border text-foreground" />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Mínimo</Label>
-                <Input type="number" value={form.min_quantity} onChange={(e) => setForm({ ...form, min_quantity: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Label className="text-muted-foreground">Mínimo</Label>
+                <Input type="number" value={form.min_quantity} onChange={(e) => setForm({ ...form, min_quantity: e.target.value })} className="bg-input/50 border-border text-foreground" />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Unid.</Label>
-                <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Label className="text-muted-foreground">Unid.</Label>
+                <Input value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} className="bg-input/50 border-border text-foreground" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-slate-300">Categoria</Label>
-                <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Label className="text-muted-foreground">Categoria</Label>
+                <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="bg-input/50 border-border text-foreground" />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Custo unit. (R$)</Label>
-                <Input type="number" step="0.01" value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: e.target.value })} className="bg-slate-800/50 border-slate-700 text-white" />
+                <Label className="text-muted-foreground">Custo unit. (R$)</Label>
+                <Input type="number" step="0.01" value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: e.target.value })} className="bg-input/50 border-border text-foreground" />
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-500 text-white">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+              <Button type="submit" disabled={saving} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                {saving ? <span className="animate-spin">⏳</span> : 'Salvar'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader><DialogTitle className="text-white">Excluir produto</DialogTitle></DialogHeader>
-          <p className="text-slate-400 text-sm">Excluir <span className="text-white font-medium">{deleteTarget?.name}</span>?</p>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="text-slate-300">Cancelar</Button>
-            <Button onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-500 text-white">
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Excluir'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="Excluir produto"
+        description={`Excluir "${deleteTarget?.name}" do estoque?`}
+        loading={deleting}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }
