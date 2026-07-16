@@ -44,7 +44,7 @@ const navigation: NavItem[] = [
   { name: 'Veículos',     href: '/veiculos',     icon: Car },
   { name: 'Serviços',     href: '/servicos',     icon: Wrench },
   { name: 'Agendamento',  href: '/agendamento',  icon: Calendar },
-  { name: 'Painel de OS', href: '/kanban',       icon: Columns3 },
+  { name: 'Fila de OS',   href: '/kanban',       icon: Columns3 },
   { name: 'Check-in',    href: '/checkin',      icon: ClipboardCheck },
   { name: 'Financeiro',  href: '/financeiro',   icon: DollarSign },
   { name: 'Estoque',     href: '/estoque',      icon: Package },
