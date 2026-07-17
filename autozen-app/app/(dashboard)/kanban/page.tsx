@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import {
   Car, Loader2, MessageSquare, Clock, User, Phone,
-  Tag, CircleDollarSign, Camera, ChevronRight, ImageIcon,
+  Tag, CircleDollarSign, Camera, ChevronRight,
   Upload, Trash2, Palette, Plus,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -25,6 +25,7 @@ import { useProfile } from '@/hooks/useProfile';
 import OsFormDialog from '@/components/os-form-dialog';
 import OperationalDashboard from './components/operational-dashboard';
 import KanbanBoard from './components/kanban-board';
+import { cn } from '@/lib/utils';
 
 interface OrderRow {
   id: string; number: number; client_id: string; vehicle_id: string; employee_id?: string;
@@ -65,12 +66,12 @@ function formatDate(iso: string) {
 
 function statusBadge(s: string) {
   const map: Record<string, string> = {
-    aguardando: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    lavando: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    finalizando: 'bg-violet-500/20 text-violet-400 border-violet-500/30',
-    pronto: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    aguardando: 'bg-amber-500/15 text-amber-500 border-amber-500/30',
+    lavando: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
+    finalizando: 'bg-violet-500/15 text-violet-400 border-violet-500/30',
+    pronto: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   };
-  return map[s] ?? 'bg-slate-500/20 text-slate-400';
+  return map[s] ?? 'bg-muted/50 text-muted-foreground';
 }
 
 function isToday(iso: string) {
@@ -89,7 +90,9 @@ export default function KanbanPage() {
   const [photos, setPhotos] = useState<PhotoRow[]>([]);
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [timelines, setTimelines] = useState<Record<string, { id: string; from_status?: string; to_status: string; timestamp: string }[]>>({});
+  
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [showNewOs, setShowNewOs] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -119,8 +122,10 @@ export default function KanbanPage() {
     return entries;
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
+
     const [o, c, v, osv, sv, ph, e] = await Promise.all([
       listRows<OrderRow>('orders', { orderBy: 'created_at' }),
       listRows<ClientOpt>('clients', { orderBy: 'name', ascending: true }),
@@ -139,17 +144,22 @@ export default function KanbanPage() {
     setPhotos(ph.data ?? []);
     setEmployees(e.data ?? []);
     setTimelines(Object.fromEntries(ordersData.map((ord) => [ord.id, computeTimeline(ord)])));
-    setLoading(false);
+    
+    if (!silent) setLoading(false);
+    else setRefreshing(false);
   }, [computeTimeline]);
 
   useEffect(() => { load(); }, [load]);
 
+  // Realtime updates
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) return;
     const channel = supabase
       .channel('kanban-orders')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { load(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => { 
+        load(true); 
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [load]);
@@ -185,13 +195,17 @@ export default function KanbanPage() {
     if (order.kanban_status === next) return;
     const prevOrders = [...orders];
     const now = new Date().toISOString();
+    
+    // Optimistic update
     setOrders((cur) => cur.map((o) => (o.id === order.id ? { ...o, kanban_status: next, updated_at: now } : o)));
     setTimelines((cur) => ({
       ...cur,
       [order.id]: [...(cur[order.id] ?? []), { id: `move-${order.id}-${Date.now()}`, from_status: order.kanban_status, to_status: next, timestamp: now }],
     }));
+    
     const { error } = await updateRow('orders', order.id, { kanban_status: next, updated_at: now });
     if (error) { toast.error('Erro ao mover: ' + error); setOrders(prevOrders); return; }
+    
     const c = clients.find((cl) => cl.id === order.client_id);
     toast.success(`OS #${order.number} → ${stageLabel[next] ?? next}`, {
       description: c?.phone ? 'Avisar o cliente no WhatsApp?' : undefined,
@@ -209,7 +223,7 @@ export default function KanbanPage() {
     toast.success(`Pagamento registrado — OS #${showPayment.number}`);
     setShowPayment(null);
     setPaying(false);
-    load();
+    load(true);
   }
 
   async function handleCancel() {
@@ -218,7 +232,7 @@ export default function KanbanPage() {
     if (error) { toast.error('Erro ao cancelar: ' + error); return; }
     toast.success(`OS #${showCancel.number} cancelada`);
     setShowCancel(null);
-    load();
+    load(true);
   }
 
   async function handleUploadPhoto(e: React.FormEvent) {
@@ -234,7 +248,7 @@ export default function KanbanPage() {
       company_id: profile.company_id, os_id: selectedId, photo_url: url, photo_type: photoTab,
     });
     if (insErr) toast.error('Erro ao salvar: ' + insErr);
-    else { toast.success('Foto enviada'); if (input) input.value = ''; load(); }
+    else { toast.success('Foto enviada'); if (input) input.value = ''; load(true); }
     setUploadingPhoto(false);
   }
 
@@ -243,7 +257,7 @@ export default function KanbanPage() {
     if (error) { toast.error('Erro ao excluir: ' + error); return; }
     await deleteStorageByUrl(p.photo_url);
     toast.success('Foto excluída');
-    load();
+    load(true);
   }
 
   function handlePrint(order: OrderRow) {
@@ -278,17 +292,26 @@ export default function KanbanPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in-up">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Kanban</h1>
-        <Button onClick={() => setShowNewOs(true)}
-          className="bg-blue-600 hover:bg-blue-500 text-white">
-          <Plus className="w-4 h-4 mr-1" /> Nova OS
-        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Fila de OS</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Gerencie os veículos em atendimento na oficina</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {refreshing && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+          <Button onClick={() => setShowNewOs(true)}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all rounded-xl">
+            <Plus className="w-4 h-4 mr-1" /> Nova OS
+          </Button>
+        </div>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-slate-500"><Loader2 className="w-6 h-6 animate-spin" /></div>
+        <div className="flex items-center justify-center py-20 text-muted-foreground flex-col gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm font-medium animate-pulse">Carregando fila...</p>
+        </div>
       ) : (
         <>
           <OperationalDashboard stats={stats} />
@@ -313,28 +336,28 @@ export default function KanbanPage() {
         </>
       )}
 
-      <OsFormDialog open={showNewOs} onOpenChange={setShowNewOs} onSaved={load} />
+      <OsFormDialog open={showNewOs} onOpenChange={setShowNewOs} onSaved={() => load(true)} />
 
       {/* Payment dialog */}
       <Dialog open={!!showPayment} onOpenChange={(o) => { if (!o) setShowPayment(null); }}>
-        <DialogContent className="bg-card border-border max-w-sm">
+        <DialogContent className="bg-card border-border/40 max-w-sm rounded-2xl glass-strong shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Receber Pagamento — OS #{showPayment?.number}</DialogTitle>
+            <DialogTitle className="text-foreground tracking-tight">Receber Pagamento</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="rounded-lg bg-slate-800/30 p-3 text-center">
-              <p className="text-xs text-slate-400">Valor</p>
-              <p className="text-2xl font-bold text-emerald-400">
+            <div className="rounded-xl bg-muted/40 border border-border/30 p-4 text-center">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Total da OS</p>
+              <p className="text-3xl font-bold text-emerald-400 tracking-tight">
                 R$ {Number(showPayment?.total ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs text-slate-400">Forma de Pagamento</Label>
+              <Label className="text-xs font-semibold text-muted-foreground uppercase">Forma de Pagamento</Label>
               <Select value={payMethod} onValueChange={(v) => setPayMethod(v ?? 'pix')}>
-                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                <SelectTrigger className="bg-background border-border/40 text-foreground rounded-xl h-11">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   <SelectItem value="pix">Pix</SelectItem>
                   <SelectItem value="dinheiro">Dinheiro</SelectItem>
                   <SelectItem value="credito">Cartão de Crédito</SelectItem>
@@ -344,9 +367,9 @@ export default function KanbanPage() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setShowPayment(null)} className="text-slate-300">Cancelar</Button>
-            <Button onClick={handlePayment} disabled={paying} className="bg-emerald-600 hover:bg-emerald-500">
-              {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar Pagamento'}
+            <Button variant="ghost" onClick={() => setShowPayment(null)} className="rounded-xl">Cancelar</Button>
+            <Button onClick={handlePayment} disabled={paying} className="bg-emerald-600 hover:bg-emerald-500 rounded-xl">
+              {paying ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -354,100 +377,108 @@ export default function KanbanPage() {
 
       {/* Cancel confirmation */}
       <Dialog open={!!showCancel} onOpenChange={(o) => { if (!o) setShowCancel(null); }}>
-        <DialogContent className="bg-card border-border max-w-sm">
+        <DialogContent className="bg-card border-border/40 max-w-sm rounded-2xl shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">Cancelar OS #{showCancel?.number}?</DialogTitle>
+            <DialogTitle className="text-foreground">Cancelar OS #{showCancel?.number}?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-400">Esta ação não pode ser desfeita. A OS será arquivada.</p>
+          <p className="text-sm text-muted-foreground">Esta ação não pode ser desfeita. A OS será cancelada permanentemente e removida da fila.</p>
           <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setShowCancel(null)} className="text-slate-300">Voltar</Button>
-            <Button onClick={handleCancel} className="bg-red-600 hover:bg-red-500 text-white">Confirmar Cancelamento</Button>
+            <Button variant="ghost" onClick={() => setShowCancel(null)} className="rounded-xl">Voltar</Button>
+            <Button onClick={handleCancel} className="bg-rose-600 hover:bg-rose-500 text-white rounded-xl">Confirmar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Detail Sheet */}
       <Sheet open={!!selectedId} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
-        <SheetContent className="w-full sm:max-w-lg border-l border-border bg-slate-950 text-white overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-md border-l border-border/40 bg-card/95 backdrop-blur-xl text-foreground overflow-y-auto">
           {selectedOrder && (
             <>
-              <SheetHeader className="pb-2 border-b border-border">
+              <SheetHeader className="pb-4 border-b border-border/40">
                 <div className="flex items-center justify-between">
-                  <SheetTitle className="text-white text-lg font-semibold">OS #{selectedOrder.number}</SheetTitle>
-                  <Badge className={`${statusBadge(selectedOrder.kanban_status)} border text-xs`}>
+                  <SheetTitle className="text-foreground text-xl tracking-tight">OS #{selectedOrder.number}</SheetTitle>
+                  <Badge className={cn("border font-bold uppercase tracking-wider text-[10px]", statusBadge(selectedOrder.kanban_status))}>
                     {stageLabel[selectedOrder.kanban_status] ?? selectedOrder.kanban_status}
                   </Badge>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Criada em {formatDate(selectedOrder.created_at)}</p>
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" /> Criada em {formatDate(selectedOrder.created_at)}
+                </p>
               </SheetHeader>
 
-              <Tabs defaultValue="dados" className="flex-1 flex flex-col mt-3">
-                <TabsList className="bg-slate-800/50 border border-border mb-3">
-                  <TabsTrigger value="dados" className="text-xs data-[state=active]:bg-slate-700">Dados</TabsTrigger>
-                  <TabsTrigger value="servicos" className="text-xs data-[state=active]:bg-slate-700">Serviços</TabsTrigger>
-                  <TabsTrigger value="fotos" className="text-xs data-[state=active]:bg-slate-700">Fotos</TabsTrigger>
-                  <TabsTrigger value="timeline" className="text-xs data-[state=active]:bg-slate-700">Histórico</TabsTrigger>
+              <Tabs defaultValue="dados" className="flex-1 flex flex-col mt-4">
+                <TabsList className="bg-muted/40 border border-border/40 mb-4 p-1 rounded-xl">
+                  <TabsTrigger value="dados" className="text-xs rounded-lg">Dados</TabsTrigger>
+                  <TabsTrigger value="servicos" className="text-xs rounded-lg">Serviços</TabsTrigger>
+                  <TabsTrigger value="fotos" className="text-xs rounded-lg">Fotos</TabsTrigger>
+                  <TabsTrigger value="timeline" className="text-xs rounded-lg">Histórico</TabsTrigger>
                 </TabsList>
 
                 <div className="flex-1 space-y-4">
-                  <TabsContent value="dados" className="space-y-4 mt-0">
+                  <TabsContent value="dados" className="space-y-4 mt-0 animate-fade-in-up">
                     {selectedClient && (
-                      <div className="rounded-lg bg-slate-800/30 p-3 space-y-2">
-                        <p className="text-xs font-medium text-slate-400 flex items-center gap-2">
-                          <User className="w-3 h-3" /> Cliente
+                      <div className="rounded-xl bg-muted/30 border border-border/30 p-3.5 space-y-2 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3 opacity-10"><User className="w-10 h-10" /></div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                          <User className="w-3.5 h-3.5" /> Cliente
                         </p>
-                        <p className="text-sm text-white">{selectedClient.name}</p>
+                        <p className="text-sm font-medium text-foreground">{selectedClient.name}</p>
                         {selectedClient.phone && (
                           <a href={`https://wa.me/55${onlyDigits(selectedClient.phone)}`} target="_blank"
-                            className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
-                            <Phone className="w-3 h-3" /> {selectedClient.phone}
+                            className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5" /> {selectedClient.phone}
                           </a>
                         )}
                       </div>
                     )}
 
                     {selectedVehicle && (
-                      <div className="rounded-lg bg-slate-800/30 p-3 space-y-2">
-                        <p className="text-xs font-medium text-slate-400 flex items-center gap-2">
-                          <Car className="w-3 h-3" /> Veículo
+                      <div className="rounded-xl bg-muted/30 border border-border/30 p-3.5 space-y-2 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3 opacity-10"><Car className="w-10 h-10" /></div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                          <Car className="w-3.5 h-3.5" /> Veículo
                         </p>
-                        <p className="text-sm text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {[selectedVehicle.brand, selectedVehicle.model, selectedVehicle.year].filter(Boolean).join(' ')}
                         </p>
-                        <p className="text-xs text-slate-400 flex items-center gap-1">
-                          <Tag className="w-3 h-3" /> {selectedVehicle.plate}
-                        </p>
-                        {selectedVehicle.color && (
-                          <p className="text-xs text-slate-400 flex items-center gap-1">
-                            <Palette className="w-3 h-3" /> {selectedVehicle.color}
+                        <div className="flex items-center gap-3 mt-1">
+                          <p className="text-xs font-mono text-muted-foreground flex items-center gap-1.5">
+                            <Tag className="w-3.5 h-3.5 text-primary" /> {selectedVehicle.plate}
                           </p>
-                        )}
+                          {selectedVehicle.color && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5 border-l border-border/50 pl-3">
+                              <Palette className="w-3.5 h-3.5 text-primary" /> {selectedVehicle.color}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     )}
 
                     {selectedOrder.description && (
-                      <div className="rounded-lg bg-slate-800/30 p-3">
-                        <p className="text-xs font-medium text-slate-400 mb-1">Observações</p>
-                        <p className="text-sm text-slate-300">{selectedOrder.description}</p>
+                      <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-3.5">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-amber-500/70 mb-1">Observações</p>
+                        <p className="text-sm text-foreground">{selectedOrder.description}</p>
                       </div>
                     )}
 
                     {selectedOrder.total && Number(selectedOrder.total) > 0 && (
-                      <div className="rounded-lg bg-slate-800/30 p-3">
-                        <p className="text-xs font-medium text-slate-400 flex items-center gap-2">
-                          <CircleDollarSign className="w-3 h-3" /> Financeiro
+                      <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 p-3.5">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-emerald-500/70 flex items-center gap-2">
+                          <CircleDollarSign className="w-3.5 h-3.5" /> Financeiro
                         </p>
-                        <p className="text-lg font-bold text-emerald-400 mt-1">
+                        <p className="text-xl font-bold text-emerald-400 mt-1 tracking-tight">
                           R$ {Number(selectedOrder.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
-                        {selectedOrder.payment_method && (
-                          <p className="text-xs text-slate-400 mt-1">
-                            Pagamento: {selectedOrder.payment_method}
-                          </p>
-                        )}
-                        <Badge className={`mt-1 text-xs ${selectedOrder.payment_method ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                          {selectedOrder.payment_method ? 'Pago' : 'Pendente'}
-                        </Badge>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge className={cn("text-[10px] uppercase font-bold px-1.5", selectedOrder.payment_method ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400')}>
+                            {selectedOrder.payment_method ? 'Pago' : 'Pendente'}
+                          </Badge>
+                          {selectedOrder.payment_method && (
+                            <span className="text-[10px] text-muted-foreground">
+                              via {selectedOrder.payment_method}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
 
@@ -456,34 +487,34 @@ export default function KanbanPage() {
                         if (col === selectedOrder.kanban_status) return null;
                         return (
                           <Button key={col} size="sm" variant="outline"
-                            className="text-xs border-slate-700 text-slate-300 hover:bg-slate-800"
+                            className="text-xs border-border/40 text-muted-foreground hover:bg-muted rounded-lg"
                             onClick={() => { moveTo(selectedOrder, col); }}>
-                            <ChevronRight className="w-3 h-3 mr-1" /> {stageLabel[col]}
+                            <ChevronRight className="w-3 h-3 mr-1 text-primary" /> {stageLabel[col]}
                           </Button>
                         );
                       })}
                       <Button size="sm" variant="outline"
-                        className="text-xs border-emerald-700 text-emerald-400 hover:bg-emerald-900/30 ml-auto"
+                        className="text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 rounded-lg ml-auto"
                         onClick={() => notify(selectedOrder)}>
-                        <MessageSquare className="w-3 h-3 mr-1" /> WhatsApp
+                        <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> Avisar
                       </Button>
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="servicos" className="space-y-3 mt-0">
+                  <TabsContent value="servicos" className="space-y-3 mt-0 animate-fade-in-up">
                     {selectedServices.length === 0 ? (
-                      <p className="text-sm text-slate-500 text-center py-6">Nenhum serviço vinculado</p>
+                      <p className="text-sm text-muted-foreground text-center py-8">Nenhum serviço vinculado</p>
                     ) : (
                       selectedServices.map((s) => {
                         const name = services.find((sv) => sv.id === s.service_id)?.name ?? '—';
                         const subtotal = Number(s.price) * (s.quantity || 1);
                         return (
-                          <div key={s.id} className="flex items-center justify-between rounded-lg bg-slate-800/30 p-3">
+                          <div key={s.id} className="flex items-center justify-between rounded-xl bg-muted/30 border border-border/30 p-3.5">
                             <div>
-                              <p className="text-sm text-white">{name}</p>
-                              {s.quantity > 1 && <p className="text-xs text-slate-500">Qtd: {s.quantity}</p>}
+                              <p className="text-sm font-medium text-foreground">{name}</p>
+                              {s.quantity > 1 && <p className="text-xs text-muted-foreground mt-0.5">Qtd: {s.quantity}</p>}
                             </div>
-                            <p className="text-sm font-medium text-emerald-400">
+                            <p className="text-sm font-bold text-emerald-400 tabular-nums">
                               R$ {subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </p>
                           </div>
@@ -491,65 +522,68 @@ export default function KanbanPage() {
                       })
                     )}
                     {selectedServices.length > 0 && (
-                      <div className="flex items-center justify-between rounded-lg bg-slate-800/50 p-3 border border-slate-700">
-                        <p className="text-sm font-medium text-white">Total</p>
-                        <p className="text-base font-bold text-emerald-400">
+                      <div className="flex items-center justify-between rounded-xl bg-card border border-primary/20 p-4 mt-2 shadow-lg shadow-primary/5">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total da OS</p>
+                        <p className="text-lg font-bold text-primary tabular-nums tracking-tight">
                           R$ {totalOS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
                       </div>
                     )}
                   </TabsContent>
 
-                  <TabsContent value="fotos" className="space-y-4 mt-0">
-                    <form onSubmit={handleUploadPhoto} className="flex flex-col gap-3 p-3 rounded-lg bg-slate-800/30">
+                  <TabsContent value="fotos" className="space-y-4 mt-0 animate-fade-in-up">
+                    <form onSubmit={handleUploadPhoto} className="flex flex-col gap-3 p-3.5 rounded-xl bg-muted/30 border border-border/30">
                       <div className="flex items-end gap-3">
                         <div className="space-y-1.5 flex-1">
-                          <Label className="text-xs text-slate-400">Tipo</Label>
+                          <Label className="text-xs font-semibold text-muted-foreground uppercase">Tipo</Label>
                           <Select value={photoTab} onValueChange={(v) => setPhotoTab(v as 'before' | 'after')}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700 text-white h-8 text-xs">
+                            <SelectTrigger className="bg-background border-border/40 text-foreground h-9 text-xs rounded-lg">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="rounded-lg">
                               <SelectItem value="before">Antes</SelectItem>
                               <SelectItem value="after">Depois</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-1.5 flex-[2]">
-                          <Label className="text-xs text-slate-400">Imagem</Label>
+                          <Label className="text-xs font-semibold text-muted-foreground uppercase">Imagem</Label>
                           <Input id="photo-upload-input" type="file" accept="image/*"
-                            className="bg-slate-800 border-slate-700 text-white h-8 text-xs file:text-xs file:text-slate-300" />
+                            className="bg-background border-border/40 text-foreground h-9 text-xs file:text-xs file:text-muted-foreground file:font-medium rounded-lg" />
                         </div>
                         <Button type="submit" disabled={uploadingPhoto} size="sm"
-                          className="bg-blue-600 hover:bg-blue-500 h-8 text-xs">
-                          {uploadingPhoto ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                          className="bg-primary hover:bg-primary/90 h-9 rounded-lg px-3">
+                          {uploadingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                         </Button>
                       </div>
                     </form>
 
                     {selectedPhotos.length === 0 ? (
-                      <div className="text-center py-6 text-slate-500 text-sm flex flex-col items-center gap-2">
-                        <Camera className="w-8 h-8 opacity-40" /> Nenhuma foto
+                      <div className="text-center py-10 text-muted-foreground text-sm flex flex-col items-center gap-3 bg-muted/10 rounded-xl border border-dashed border-border/40">
+                        <Camera className="w-8 h-8 opacity-40 text-primary" /> Nenhuma foto
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 gap-3">
-                        {[{ label: 'Antes', list: selectedPhotos.filter((p) => p.photo_type === 'before'), color: 'text-amber-400' },
-                          { label: 'Depois', list: selectedPhotos.filter((p) => p.photo_type === 'after'), color: 'text-emerald-400' },
+                      <div className="grid grid-cols-2 gap-4">
+                        {[{ label: 'Antes', list: selectedPhotos.filter((p) => p.photo_type === 'before'), color: 'text-amber-500' },
+                          { label: 'Depois', list: selectedPhotos.filter((p) => p.photo_type === 'after'), color: 'text-emerald-500' },
                         ].map((col) => (
                           <div key={col.label}>
-                            <p className={`text-xs font-medium mb-2 ${col.color}`}>{col.label}</p>
-                            <div className="grid grid-cols-2 gap-1.5">
+                            <p className={cn("text-xs font-bold uppercase tracking-wider mb-2.5 flex items-center gap-1.5", col.color)}>
+                              <span className={cn("w-1.5 h-1.5 rounded-full", col.color.replace('text', 'bg'))} />
+                              {col.label}
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
                               {col.list.map((p) => (
-                                <div key={p.id} className="relative aspect-square rounded-lg overflow-hidden bg-slate-800/50 group">
-                                  <Image src={p.photo_url} alt={col.label} fill className="object-cover" unoptimized />
+                                <div key={p.id} className="relative aspect-square rounded-xl overflow-hidden bg-muted/40 group border border-border/20 shadow-sm">
+                                  <Image src={p.photo_url} alt={col.label} fill className="object-cover transition-transform group-hover:scale-105" unoptimized />
                                   <button onClick={() => removePhoto(p)}
-                                    className="absolute top-1 right-1 h-5 w-5 bg-black/60 text-white rounded flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-opacity"
+                                    className="absolute top-1.5 right-1.5 h-6 w-6 bg-black/60 backdrop-blur-sm text-white rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-rose-600 transition-all scale-90 group-hover:scale-100"
                                     aria-label="Excluir">
-                                    <Trash2 className="w-3 h-3" />
+                                    <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
                               ))}
-                              {col.list.length === 0 && <p className="text-xs text-slate-600 col-span-2">—</p>}
+                              {col.list.length === 0 && <p className="text-[10px] text-muted-foreground/50 col-span-2 py-4 text-center border border-dashed border-border/30 rounded-xl">—</p>}
                             </div>
                           </div>
                         ))}
@@ -557,20 +591,23 @@ export default function KanbanPage() {
                     )}
                   </TabsContent>
 
-                  <TabsContent value="timeline" className="space-y-0 mt-0">
+                  <TabsContent value="timeline" className="space-y-0 mt-0 animate-fade-in-up">
                     {selectedTimeline.length === 0 ? (
-                      <p className="text-sm text-slate-500 text-center py-6">Nenhum registro</p>
+                      <p className="text-sm text-muted-foreground text-center py-8">Nenhum registro</p>
                     ) : (
-                      <div className="relative pl-6 border-l-2 border-slate-700 space-y-4 ml-2">
+                      <div className="relative pl-6 border-l border-border/40 space-y-5 ml-3 py-2">
                         {selectedTimeline.map((entry, i) => (
                           <div key={entry.id} className="relative">
-                            <div className={`absolute -left-[25px] w-3 h-3 rounded-full border-2 ${i === selectedTimeline.length - 1 ? 'bg-blue-500 border-blue-400' : 'bg-slate-800 border-slate-600'}`} />
-                            <p className="text-sm text-white">
+                            <div className={cn(
+                              "absolute -left-[29px] w-3 h-3 rounded-full border-2",
+                              i === selectedTimeline.length - 1 ? 'bg-primary border-primary ring-4 ring-primary/20' : 'bg-background border-muted-foreground/40'
+                            )} />
+                            <p className={cn("text-sm font-medium", i === selectedTimeline.length -1 ? "text-foreground" : "text-muted-foreground")}>
                               {entry.to_status === 'criado' ? 'OS criada' : entry.from_status
                                 ? `${stageLabel[entry.from_status] ?? entry.from_status} → ${stageLabel[entry.to_status] ?? entry.to_status}`
                                 : `Movido para ${stageLabel[entry.to_status] ?? entry.to_status}`}
                             </p>
-                            <p className="text-xs text-slate-500">{formatDate(entry.timestamp)}</p>
+                            <p className="text-xs text-muted-foreground/60 font-mono mt-0.5">{formatDate(entry.timestamp)}</p>
                           </div>
                         ))}
                       </div>
